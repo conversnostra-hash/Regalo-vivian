@@ -8,28 +8,34 @@
         @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@300&display=swap');
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; color: white; touch-action: none; }
         canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
+        
+        /* BOTÓN MEJORADO Y CENTRADO */
         #btn-play {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 100; background: rgba(255, 45, 85, 0.2); border: 2px solid #ff2d55;
-            color: #ff2d55; padding: 15px 30px; border-radius: 40px; cursor: pointer;
-            font-family: 'Montserrat', sans-serif; font-size: 14px; letter-spacing: 3px;
+            z-index: 100; background: rgba(0, 0, 0, 0.8); border: 2px solid #ff2d55;
+            color: #ff2d55; padding: 20px 40px; border-radius: 50px; cursor: pointer;
+            font-family: 'Montserrat', sans-serif; font-size: 16px; letter-spacing: 4px;
+            box-shadow: 0 0 20px #ff2d55;
         }
+
         #mensaje-fijo {
-            position: absolute; bottom: 8%; width: 100%; text-align: center; z-index: 10;
-            font-family: 'Montserrat', sans-serif; font-size: 0.8rem; letter-spacing: 2px;
-            text-transform: uppercase; opacity: 0.9; color: #ffb3c1; pointer-events: auto; /* IMPORTANTE */
+            position: absolute; bottom: 5%; width: 100%; text-align: center; z-index: 10;
+            font-family: 'Montserrat', sans-serif; font-size: 0.7rem; letter-spacing: 2px;
+            text-transform: uppercase; color: #ffb3c1; pointer-events: auto;
+            background: rgba(0,0,0,0.5); padding: 10px 0;
         }
+
         #foto-vivian {
             position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%) scale(0);
-            z-index: 50; max-height: 60%; max-width: 85%; border-radius: 15px;
-            box-shadow: 0 0 50px rgba(255, 45, 85, 0.8); transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+            z-index: 50; max-height: 65%; max-width: 85%; border-radius: 15px;
+            box-shadow: 0 0 50px rgba(255, 45, 85, 0.8); transition: all 0.6s ease;
             opacity: 0; pointer-events: none; border: 3px solid #ff2d55;
         }
     </style>
 </head>
 <body>
     <button id="btn-play">PARA VIVIAN 🎵</button>
-    <div id="mensaje-fijo">Tu belleza ilumina más que cualquier estrella. <br> <span style="font-size: 0.6rem; opacity: 0.7;">(Doble toque rápido aquí para sorpresa)</span></div>
+    <div id="mensaje-fijo">Tu belleza ilumina más que cualquier estrella.<br>(Doble toque rápido para sorpresa)</div>
     <img id="foto-vivian" src="Foto.jpg" alt="Vivian">
     <canvas id="heartCanvas"></canvas>
     <audio id="musica" loop><source src="bruno.mp3" type="audio/mpeg"></audio>
@@ -46,115 +52,111 @@
     let rotationX = 0, rotationY = 0;
     let targetRotationX = 0, targetRotationY = 0;
     let lastX = 0, lastY = 0, isDragging = false;
-    let state = "HEART"; // HEART, TEXT
+    let state = "HEART"; // HEART o TEXT
 
     function init() {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
         particles = [];
-        for (let i = 0; i < 2500; i++) {
+        for (let i = 0; i < 2000; i++) {
             const t = Math.random() * Math.PI * 2;
             particles.push({
-                t, r: Math.pow(Math.random(), 0.5), z: (Math.random()-0.5)*25,
-                x: Math.random() * width, y: Math.random() * height,
-                vx: 0, vy: 0, tx: 0, ty: 0, active: false
+                t, r: Math.pow(Math.random(), 0.5), z: (Math.random()-0.5)*30,
+                x: width/2, y: height/2, vx: 0, vy: 0, tx: 0, ty: 0, active: false
             });
         }
     }
 
     function getHeartPos(p) {
-        const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.07;
+        const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.08;
         let x = 16 * Math.pow(Math.sin(p.t), 3) * p.r * pulse;
         let y = -(13 * Math.cos(p.t) - 5 * Math.cos(2*p.t) - 2 * Math.cos(3*p.t) - Math.cos(4*p.t)) * p.r * pulse;
         let z = p.z * pulse;
+        
+        // Aplicar rotación 3D
         let x1 = x * Math.cos(rotationY) - z * Math.sin(rotationY);
         let z1 = x * Math.sin(rotationY) + z * Math.cos(rotationY);
         let y2 = y * Math.cos(rotationX) - z1 * Math.sin(rotationX);
-        return { x: x1 * 12 + width / 2, y: y2 * 12 + height / 2 - 40 };
+        
+        return { x: x1 * 12 + width / 2, y: y2 * 12 + height / 2 - 20 };
     }
 
-    function createText(text) {
+    function createTextPoints(text) {
         const tCanvas = document.createElement('canvas');
         const tCtx = tCanvas.getContext('2d');
         tCanvas.width = width; tCanvas.height = height;
         tCtx.fillStyle = "white";
-        tCtx.font = `bold ${Math.min(width/8, 45)}px 'Dancing Script'`;
+        tCtx.font = `bold ${Math.min(width/7, 50)}px 'Dancing Script'`;
         tCtx.textAlign = 'center';
         tCtx.fillText(text, width / 2, height / 2);
         const data = tCtx.getImageData(0,0,width,height).data;
-        const points = [];
-        for(let y=0; y<height; y+=4) for(let x=0; x<width; x+=4) if(data[(y*width+x)*4+3]>128) points.push({x,y});
-        return points;
+        const pts = [];
+        for(let y=0; y<height; y+=5) for(let x=0; x<width; x+=5) if(data[(y*width+x)*4+3]>128) pts.push({x,y});
+        return pts;
     }
 
-    async function showSequence() {
+    async function sequence() {
         const words = ["¡Feliz", "Cumpleaños,", "Vivian!"];
         for (let word of words) {
             state = "TEXT";
-            const pts = createText(word);
+            const pts = createTextPoints(word);
             particles.forEach((p, i) => {
                 if (i < pts.length) { p.active = true; p.tx = pts[i].x; p.ty = pts[i].y; }
                 else { p.active = false; }
             });
-            await new Promise(r => setTimeout(r, 2000));
+            await new Promise(r => setTimeout(r, 2200));
         }
-        state = "HEART"; // Regresar al corazón automáticamente
-        particles.forEach(p => p.active = false);
+        state = "HEART"; // Volver al corazón al final
     }
 
     function draw() {
-        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
         ctx.fillRect(0,0,width,height);
+        
         rotationX += (targetRotationX - rotationX) * 0.05;
         rotationY += (targetRotationY - rotationY) * 0.05;
 
         particles.forEach(p => {
             const target = (state === "TEXT" && p.active) ? {x: p.tx, y: p.ty} : getHeartPos(p);
-            p.vx += (target.x - p.x) * 0.04;
-            p.vy += (target.y - p.y) * 0.04;
-            p.vx *= 0.85; p.vy *= 0.85;
+            p.vx += (target.x - p.x) * 0.05;
+            p.vy += (target.y - p.y) * 0.05;
+            p.vx *= 0.8; p.vy *= 0.8;
             p.x += p.vx; p.y += p.vy;
+            
             ctx.fillStyle = '#ff2d55';
-            ctx.fillRect(p.x, p.y, 1.8, 1.8);
+            ctx.fillRect(p.x, p.y, 2, 2);
         });
         requestAnimationFrame(draw);
     }
 
     btn.addEventListener('click', () => {
-        audio.play().catch(() => {});
+        audio.play();
         btn.style.display = 'none';
-        showSequence();
+        sequence();
     });
 
-    // DOBLE TOQUE SÚPER RÁPIDO SÓLO EN LA FRASE
+    // Lógica de Doble Toque en la Frase
     let lastTap = 0;
     msgFijo.addEventListener('touchend', (e) => {
         const now = Date.now();
-        const tapLength = now - lastTap;
-        if (tapLength < 250 && tapLength > 0) { // Menos de 250ms es un doble tap real
-            mostrarFoto();
-            e.preventDefault(); // Evitar que el navegador haga zoom
+        if (now - lastTap < 300) {
+            foto.style.transform = "translate(-50%, -50%) scale(1)";
+            foto.style.opacity = "1";
+            setTimeout(() => { 
+                foto.style.transform = "translate(-50%, -50%) scale(0)";
+                foto.style.opacity = "0";
+            }, 5000);
         }
         lastTap = now;
     });
 
-    function mostrarFoto() {
-        foto.style.transform = "translate(-50%, -50%) scale(1)";
-        foto.style.opacity = "1";
-        setTimeout(() => {
-            foto.style.transform = "translate(-50%, -50%) scale(0)";
-            foto.style.opacity = "0";
-        }, 5000);
-    }
-
-    // INTERACCIÓN 3D (Táctil normal)
+    // Control de Rotación 3D
     window.addEventListener('touchstart', e => {
-        // Ignorar si el toque es en la frase inferior
         if (e.target === msgFijo) return;
         lastX = e.touches[0].clientX;
         lastY = e.touches[0].clientY;
         isDragging = true;
-    }, {passive: false});
+    });
 
     window.addEventListener('touchmove', e => {
         if(isDragging) {
@@ -162,10 +164,9 @@
             targetRotationX -= (e.touches[0].clientY - lastY) * 0.01;
             lastX = e.touches[0].clientX;
             lastY = e.touches[0].clientY;
-            if (e.cancelable) e.preventDefault();
         }
-    }, {passive: false});
-    
+    });
+
     window.addEventListener('touchend', () => isDragging = false);
     window.addEventListener('resize', init);
 
@@ -173,3 +174,4 @@
 </script>
 </body>
 </html>
+
