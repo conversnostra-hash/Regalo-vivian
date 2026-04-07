@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,35 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Para Vivian</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@300&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;700&display=swap');
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; color: white; touch-action: none; }
         canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
         
         #btn-play {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             z-index: 100; background: rgba(0, 0, 0, 0.9); border: 2px solid #ff2d55;
-            color: #ff2d55; padding: 15px 30px; border-radius: 50px; cursor: pointer;
-            font-family: 'Montserrat', sans-serif; font-size: 14px; letter-spacing: 4px;
-            box-shadow: 0 0 20px #ff2d55;
+            color: #ff2d55; padding: 18px 36px; border-radius: 50px; cursor: pointer;
+            font-family: 'Montserrat', sans-serif; font-size: 16px; letter-spacing: 4px;
+            box-shadow: 0 0 25px #ff2d55;
         }
 
         #mensaje-fijo {
-            position: absolute; bottom: 5%; width: 100%; text-align: center; z-index: 10;
-            font-family: 'Montserrat', sans-serif; font-size: 0.65rem; letter-spacing: 2px;
-            text-transform: uppercase; color: #ffb3c1; opacity: 0.7;
+            position: absolute; bottom: 6%; width: 100%; text-align: center; z-index: 10;
+            font-family: 'Montserrat', sans-serif; 
+            /* HACEMOS LA FRASE MÁS GRANDE Y LEGIBLE */
+            font-size: 0.85rem; font-weight: 400; letter-spacing: 1.5px;
+            line-height: 1.6; text-transform: uppercase; color: #ffb3c1;
+            text-shadow: 0 0 10px rgba(255, 179, 193, 0.5);
         }
 
         #foto-vivian {
-            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0);
-            z-index: 50; max-height: 55%; max-width: 80%; border-radius: 15px;
-            box-shadow: 0 0 40px rgba(255, 45, 85, 0.8); transition: all 0.6s ease;
+            position: absolute; top: 42%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            z-index: 50; max-height: 55%; max-width: 85%; border-radius: 15px;
+            box-shadow: 0 0 50px rgba(255, 45, 85, 0.9); transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             opacity: 0; pointer-events: none; border: 3px solid #ff2d55;
         }
     </style>
 </head>
 <body>
     <button id="btn-play">PARA VIVIAN 🎵</button>
-    <div id="mensaje-fijo">Tu belleza ilumina más que cualquier estrella.<br>(Doble toque en la pantalla para sorpresa)</div>
+    <div id="mensaje-fijo">Tu belleza ilumina más que cualquier estrella.<br><b>(Doble toque para sorpresa)</b></div>
     <img id="foto-vivian" src="Foto.jpg" alt="Vivian">
     <canvas id="heartCanvas"></canvas>
     <audio id="musica" loop><source src="bruno.mp3" type="audio/mpeg"></audio>
@@ -54,19 +56,19 @@
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
         particles = [];
-        // Aumentamos a 4000 partículas para asegurar densidad en el texto
-        for (let i = 0; i < 4000; i++) {
+        // 4500 partículas para máxima densidad de texto y corazón
+        for (let i = 0; i < 4500; i++) {
             const t = Math.random() * Math.PI * 2;
             particles.push({
-                t, r: Math.pow(Math.random(), 0.5), z: (Math.random()-0.5)*25,
+                t, r: Math.pow(Math.random(), 0.5), z: (Math.random()-0.5)*30,
                 x: width/2, y: height/2, vx: 0, vy: 0, 
-                tx: 0, ty: 0, isText: false
+                tx: 0, ty: 0, isText: false, initialized: false
             });
         }
     }
 
     function getHeartPos(p) {
-        const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.1;
+        const pulse = 1 + Math.sin(Date.now() * 0.0035) * 0.12;
         let x = 16 * Math.pow(Math.sin(p.t), 3) * p.r * pulse;
         let y = -(13 * Math.cos(p.t) - 5 * Math.cos(2*p.t) - 2 * Math.cos(3*p.t) - Math.cos(4*p.t)) * p.r * pulse;
         let z = p.z * pulse;
@@ -75,8 +77,8 @@
         let z1 = x * Math.sin(rotationY) + z * Math.cos(rotationY);
         let y2 = y * Math.cos(rotationX) - z1 * Math.sin(rotationX);
         
-        const scale = Math.min(width, height) / 48;
-        return { x: x1 * scale + width / 2, y: y2 * scale + height / 2 - 120 };
+        const scale = Math.min(width, height) / 50;
+        return { x: x1 * scale + width / 2, y: y2 * scale + height / 2 - 130 };
     }
 
     function createTextPoints(text, xCenter) {
@@ -84,13 +86,13 @@
         const tCtx = tCanvas.getContext('2d');
         tCanvas.width = width; tCanvas.height = height;
         tCtx.fillStyle = "white";
-        // Forzamos fuente idéntica para todas las palabras
-        tCtx.font = `bold ${Math.min(width/10, 38)}px 'Dancing Script'`;
+        // Unificamos fuente y tamaño para evitar errores de renderizado
+        tCtx.font = `bold ${Math.min(width/10, 40)}px 'Dancing Script'`;
         tCtx.textAlign = 'center';
-        tCtx.fillText(text, xCenter, height * 0.82);
+        tCtx.fillText(text, xCenter, height * 0.84);
         const data = tCtx.getImageData(0,0,width,height).data;
         const pts = [];
-        for(let y=0; y<height; y+=2) for(let x=0; x<width; x+=2) if(data[(y*width+x)*4+3]>150) pts.push({x,y});
+        for(let y=0; y<height; y+=2) for(let x=0; x<width; x+=2) if(data[(y*width+x)*4+3]>160) pts.push({x,y});
         return pts;
     }
 
@@ -110,34 +112,36 @@
                 p.tx = pts[i].x; 
                 p.ty = pts[i].y;
             }
-            await new Promise(r => setTimeout(r, 800));
+            await new Promise(r => setTimeout(r, 900));
         }
     }
 
     function draw() {
-        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.fillStyle = 'rgba(0,0,0,0.22)';
         ctx.fillRect(0,0,width,height);
         
         if (active) {
-            // LÓGICA DE RETORNO: Si no hay drag, las rotaciones vuelven a 0
+            // FUERZA DE RETORNO AL ORIGEN: Si no arrastra, vuelve a 0
             if (!isDragging) {
-                targetRotationX *= 0.95;
-                targetRotationY *= 0.95;
+                targetRotationX *= 0.92;
+                targetRotationY *= 0.92;
             }
 
-            rotationX += (targetRotationX - rotationX) * 0.05;
-            rotationY += (targetRotationY - rotationY) * 0.05;
+            rotationX += (targetRotationX - rotationX) * 0.06;
+            rotationY += (targetRotationY - rotationY) * 0.06;
 
             particles.forEach(p => {
+                // Las de texto son INMUNES a la rotación una vez fijadas
                 const target = p.isText ? {x: p.tx, y: p.ty} : getHeartPos(p);
                 
-                p.vx += (target.x - p.x) * 0.05;
-                p.vy += (target.y - p.y) * 0.05;
-                p.vx *= 0.82; p.vy *= 0.82;
+                let easing = p.isText ? 0.04 : 0.06;
+                p.vx += (target.x - p.x) * easing;
+                p.vy += (target.y - p.y) * easing;
+                p.vx *= 0.84; p.vy *= 0.84;
                 p.x += p.vx; p.y += p.vy;
                 
                 ctx.fillStyle = '#ff2d55';
-                ctx.fillRect(p.x, p.y, 2.2, 2.2);
+                ctx.fillRect(p.x, p.y, 2.3, 2.3);
             });
         }
         requestAnimationFrame(draw);
@@ -171,8 +175,8 @@
 
     window.addEventListener('touchmove', e => {
         if(isDragging) {
-            targetRotationY += (e.touches[0].clientX - lastX) * 0.015;
-            targetRotationX -= (e.touches[0].clientY - lastY) * 0.015;
+            targetRotationY += (e.touches[0].clientX - lastX) * 0.018;
+            targetRotationX -= (e.touches[0].clientY - lastY) * 0.018;
             lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
         }
     });
@@ -182,3 +186,4 @@
 </script>
 </body>
 </html>
+
