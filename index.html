@@ -7,12 +7,15 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;700&display=swap');
         
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; color: white; touch-action: none; }
+        /* 'touch-action: manipulation' bloquea el doble toque para zoom en la mayoría de móviles */
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; background-color: #000; color: white; 
+            touch-action: manipulation; 
+        }
         
-        /* Capa 1: El fondo 3D (Corazón) */
         canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
         
-        /* Capa 2: Elementos de interfaz fija */
         #btn-play {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             z-index: 100; background: rgba(0, 0, 0, 0.9); border: 2px solid #ff2d55;
@@ -29,13 +32,11 @@
             text-shadow: 0 0 10px rgba(255, 179, 193, 0.5);
         }
 
-        /* Capa 3: La Foto (Independiente de la rotación 3D) */
+        /* Contenedor que ignora la rotación del canvas */
         #contenedor-foto {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; align-items: center; justify-content: center;
-            pointer-events: none; /* No interfiere con el toque del corazón */
-            z-index: 50; 
+            pointer-events: none; z-index: 50; 
         }
 
         #foto-vivian {
@@ -44,7 +45,7 @@
             transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             transform: scale(0); opacity: 0;
             border: 3px solid #ff2d55;
-            background-color: #000; /* Evita transparencias raras */
+            background-color: #000;
         }
     </style>
 </head>
@@ -65,6 +66,11 @@
     const audio = document.getElementById('musica');
     const btn = document.getElementById('btn-play');
     const foto = document.getElementById('foto-vivian');
+
+    // Bloqueo total de zoom por software
+    document.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) e.preventDefault(); // Bloquea zoom de dos dedos
+    }, { passive: false });
 
     const galeriaFotos = [
         'Vi1.jpg', 'Vi2.jpg', 'Vi3.jpg', 'Vi4.jpg', 'Vi5.jpg',
@@ -182,7 +188,7 @@
                     p.x += p.vx; p.y += p.vy;
                 }
                 ctx.fillStyle = '#ff2d55';
-                ctx.fillRect(p.x, p.y, 2, 2);
+                ctx.fillRect(p.x, p.y, 2.1, 2.1);
             });
         }
         requestAnimationFrame(draw);
@@ -198,10 +204,13 @@
     window.addEventListener('touchend', (e) => {
         const now = Date.now();
         if (now - lastTap < 300) {
+            // Prevenimos el comportamiento por defecto del doble tap
+            e.preventDefault();
+            
             foto.style.transform = "scale(1)";
             foto.style.opacity = "1";
             
-            // REGRESAMOS A 8 SEGUNDOS (8000ms)
+            // 8 SEGUNDOS DE VISIBILIDAD
             setTimeout(() => { 
                 foto.style.transform = "scale(0)";
                 foto.style.opacity = "0";
