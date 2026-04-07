@@ -24,7 +24,9 @@
         }
 
         #foto-vivian {
-            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            position: absolute; 
+            /* SUBIMOS LA FOTO UN POCO DEL CENTRO */
+            top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0);
             z-index: 50; max-height: 60%; max-width: 80%; border-radius: 15px;
             box-shadow: 0 0 40px rgba(255, 45, 85, 0.8); transition: all 0.6s ease;
             opacity: 0; pointer-events: none; border: 3px solid #ff2d55;
@@ -48,13 +50,12 @@
     let width, height, particles = [];
     let rotationX = 0, rotationY = 0, targetRotationX = 0, targetRotationY = 0;
     let lastX = 0, lastY = 0, isDragging = false, active = false;
-    let state = "HEART"; // HEART o TEXT
+    let state = "WAIT"; // WAIT, HEART, TEXT, FINAL
 
     function init() {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
         particles = [];
-        // 3500 partículas para una densidad de texto perfecta
         for (let i = 0; i < 3500; i++) {
             const t = Math.random() * Math.PI * 2;
             particles.push({
@@ -76,6 +77,7 @@
         let y2 = y * Math.cos(rotationX) - z1 * Math.sin(rotationX);
         
         const scale = Math.min(width, height) / 45;
+        // SUBIMOS EL CORAZÓN UN POCO DEL CENTRO (-80px)
         return { x: x1 * scale + width / 2, y: y2 * scale + height / 2 - 80 };
     }
 
@@ -86,6 +88,7 @@
         tCtx.fillStyle = "white";
         tCtx.font = `bold ${Math.min(width/10, 42)}px 'Dancing Script'`;
         tCtx.textAlign = 'center';
+        // BAJAMOS EL TEXTO DEL CENTRO (+180px) PARA QUE NO CHOQUE CON EL CORAZÓN
         tCtx.fillText(text, xCenter, height / 2 + 180);
         const data = tCtx.getImageData(0,0,width,height).data;
         const pts = [];
@@ -94,6 +97,7 @@
     }
 
     async function startSequence() {
+        state = "TEXT";
         const words = [
             { txt: "¡Feliz", x: width * 0.22 },
             { txt: "Cumpleaños,", x: width * 0.5 },
@@ -107,10 +111,12 @@
                 let p = particles[pIdx++];
                 p.isText = true; p.tx = pts[i].x; p.ty = pts[i].y;
             }
-            await new Promise(r => setTimeout(r, 800)); // Secuencial
+            await new Promise(r => setTimeout(r, 800)); // Aparición secuencial
         }
-        // Retorno: El corazón vuelve a completarse arriba del texto
-        setTimeout(() => { state = "HEART"; }, 1000);
+
+        // Una vez que el nombre está formado, liberamos el resto de partículas
+        // para que vuelvan obligatoriamente a formar el corazón 3D.
+        setTimeout(() => { state = "FINAL"; }, 1500);
     }
 
     function draw() {
@@ -122,7 +128,7 @@
             rotationY += (targetRotationY - rotationY) * 0.05;
 
             particles.forEach(p => {
-                // Si es de texto, va a su sitio fijo. Si no, sigue al corazón 3D.
+                // Estado FINAL: Las de texto van a su sitio, el resto va al corazón 3D.
                 const target = p.isText ? {x: p.tx, y: p.ty} : getHeartPos(p);
                 
                 p.vx += (target.x - p.x) * 0.045;
@@ -140,16 +146,19 @@
     btn.addEventListener('click', () => {
         audio.play(); btn.style.display = 'none';
         active = true;
-        setTimeout(startSequence, 1500);
+        // Primero aseguramos que el corazón lata
+        state = "HEART";
+        // Después de 2 segundos, inicia la secuencia de letras
+        setTimeout(startSequence, 2000);
     });
 
-    // Interacción Táctil y Sorpresa
     let lastTap = 0;
     window.addEventListener('touchend', (e) => {
         const now = Date.now();
         if (now - lastTap < 300) {
             foto.style.transform = "translate(-50%, -50%) scale(1)";
             foto.style.opacity = "1";
+            // La foto aparece pero el corazón sigue latiendo detrás
             setTimeout(() => { 
                 foto.style.transform = "translate(-50%, -50%) scale(0)";
                 foto.style.opacity = "0";
