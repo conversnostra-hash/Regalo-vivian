@@ -6,6 +6,7 @@
     <title>Para Vivian</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;700&display=swap');
+        
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; color: white; touch-action: none; }
         canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
         
@@ -50,19 +51,29 @@
     const btn = document.getElementById('btn-play');
     const foto = document.getElementById('foto-vivian');
 
-    // --- CONFIGURACIÓN DE LA GALERÍA ---
+    // CONFIGURACIÓN DE GALERÍA (19 FOTOS)
     const galeriaFotos = [
         'Vi1.jpg', 'Vi2.jpg', 'Vi3.jpg', 'Vi4.jpg', 'Vi5.jpg',
         'Vi6.jpg', 'Vi7.jpg', 'Vi8.jpg', 'Vi9.jpg', 'Vi10.jpg',
         'Vi11.jpg', 'Vi12.jpg', 'Vi13.jpg', 'Vi14.jpg', 'Vi15.jpg',
         'Vi16.jpg', 'Vi17.jpg', 'Vi18.jpg', 'Vi19.jpg'
     ];
-    let ultimaFoto = -1; // Para no repetir
-    // ----------------------------------
+    let mazoFotos = [];
 
     let width, height, particles = [];
     let rotationX = 0, rotationY = 0, targetRotationX = 0, targetRotationY = 0;
     let lastX = 0, lastY = 0, isDragging = false, active = false;
+
+    // ALGORITMO DE BARAJADO PARA EVITAR REPETICIONES
+    function barajarFotos() {
+        mazoFotos = [...galeriaFotos].sort(() => Math.random() - 0.5);
+    }
+
+    function cambiarFoto() {
+        if (mazoFotos.length === 0) barajarFotos();
+        const nuevaFoto = mazoFotos.pop();
+        foto.src = nuevaFoto;
+    }
 
     function init() {
         width = canvas.width = window.innerWidth;
@@ -76,19 +87,8 @@
                 tx: 0, ty: 0, isText: false, locked: false
             });
         }
-        // Pre-cargamos la primera foto
+        barajarFotos();
         cambiarFoto();
-    }
-
-    function cambiarFoto() {
-        let nuevaFoto;
-        do {
-            nuevaFoto = Math.floor(Math.random() * galeriaFotos.length);
-        } while (nuevaFoto === ultimaFoto); // Asegura que no sea la misma
-
-        ultimaFoto = nuevaFoto;
-        // Asignamos la nueva foto al elemento img
-        foto.src = galeriaFotos[nuevaFoto];
     }
 
     function getHeartPos(p) {
@@ -125,15 +125,12 @@
             { txt: "Cumpleaños,", x: width * 0.5 },
             { txt: "Vivian!", x: width * 0.78 }
         ];
-
         let pIdx = 0;
         for (let word of words) {
             const pts = createTextPoints(word.txt, word.x);
             for (let i = 0; i < pts.length && pIdx < particles.length; i++) {
                 let p = particles[pIdx++];
-                p.isText = true; 
-                p.tx = pts[i].x; 
-                p.ty = pts[i].y;
+                p.isText = true; p.tx = pts[i].x; p.ty = pts[i].y;
             }
             await new Promise(r => setTimeout(r, 900));
         }
@@ -148,23 +145,21 @@
                 targetRotationX *= 0.90;
                 targetRotationY *= 0.90;
             }
-
             rotationX += (targetRotationX - rotationX) * 0.06;
             rotationY += (targetRotationY - rotationY) * 0.06;
 
             particles.forEach(p => {
                 if (p.isText) {
-                    const dist = Math.hypot(p.tx - p.x, p.ty - p.y);
-                    if (dist < 0.5) {
-                        p.x = p.tx; p.y = p.ty;
-                        p.vx = 0; p.vy = 0;
-                        p.locked = true;
-                    }
                     if (!p.locked) {
-                        p.vx += (p.tx - p.x) * 0.04;
-                        p.vy += (p.ty - p.y) * 0.04;
-                        p.vx *= 0.8; p.vy *= 0.8;
-                        p.x += p.vx; p.y += p.vy;
+                        const dist = Math.hypot(p.tx - p.x, p.ty - p.y);
+                        if (dist < 0.5) {
+                            p.x = p.tx; p.y = p.ty; p.vx = 0; p.vy = 0; p.locked = true;
+                        } else {
+                            p.vx += (p.tx - p.x) * 0.04;
+                            p.vy += (p.ty - p.y) * 0.04;
+                            p.vx *= 0.8; p.vy *= 0.8;
+                            p.x += p.vx; p.y += p.vy;
+                        }
                     }
                 } else {
                     const target = getHeartPos(p);
@@ -173,7 +168,6 @@
                     p.vx *= 0.82; p.vy *= 0.82;
                     p.x += p.vx; p.y += p.vy;
                 }
-                
                 ctx.fillStyle = '#ff2d55';
                 ctx.fillRect(p.x, p.y, 2.3, 2.3);
             });
@@ -191,15 +185,11 @@
     window.addEventListener('touchend', (e) => {
         const now = Date.now();
         if (now - lastTap < 300) {
-            // Muestra la foto actual y prepara la siguiente
             foto.style.transform = "translate(-50%, -50%) scale(1)";
             foto.style.opacity = "1";
-            
             setTimeout(() => { 
                 foto.style.transform = "translate(-50%, -50%) scale(0)";
                 foto.style.opacity = "0";
-                // Una vez que la foto se oculta, cambiamos a la siguiente
-                // para que esté lista para el próximo doble toque.
                 setTimeout(cambiarFoto, 800); 
             }, 8000);
         }
@@ -225,4 +215,3 @@
 </script>
 </body>
 </html>
-
