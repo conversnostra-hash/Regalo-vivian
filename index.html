@@ -8,8 +8,11 @@
         @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;700&display=swap');
         
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; color: white; touch-action: none; }
+        
+        /* Capa 1: El fondo 3D (Corazón) */
         canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
         
+        /* Capa 2: Elementos de interfaz fija */
         #btn-play {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             z-index: 100; background: rgba(0, 0, 0, 0.9); border: 2px solid #ff2d55;
@@ -26,12 +29,22 @@
             text-shadow: 0 0 10px rgba(255, 179, 193, 0.5);
         }
 
+        /* Capa 3: La Foto (Independiente de la rotación 3D) */
+        #contenedor-foto {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            pointer-events: none; /* No interfiere con el toque del corazón */
+            z-index: 50; 
+        }
+
         #foto-vivian {
-            position: absolute; top: 42%; left: 50%; transform: translate(-50%, -50%) scale(0);
-            z-index: 50; max-height: 55%; max-width: 85%; border-radius: 15px;
+            max-height: 60%; max-width: 85%; border-radius: 15px;
             box-shadow: 0 0 50px rgba(255, 45, 85, 0.9); 
             transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            opacity: 0; pointer-events: none; border: 3px solid #ff2d55;
+            transform: scale(0); opacity: 0;
+            border: 3px solid #ff2d55;
+            background-color: #000; /* Evita transparencias raras */
         }
     </style>
 </head>
@@ -39,7 +52,9 @@
     <button id="btn-play">PARA VIVIAN 🎵</button>
     <div id="mensaje-fijo">Tu belleza ilumina más que cualquier estrella.<br><b>(Doble toque para sorpresa)</b></div>
     
-    <img id="foto-vivian" src="" alt="Vivian">
+    <div id="contenedor-foto">
+        <img id="foto-vivian" src="" alt="Vivian">
+    </div>
     
     <canvas id="heartCanvas"></canvas>
     <audio id="musica" loop><source src="bruno.mp3" type="audio/mpeg"></audio>
@@ -51,7 +66,6 @@
     const btn = document.getElementById('btn-play');
     const foto = document.getElementById('foto-vivian');
 
-    // CONFIGURACIÓN DE GALERÍA (19 FOTOS)
     const galeriaFotos = [
         'Vi1.jpg', 'Vi2.jpg', 'Vi3.jpg', 'Vi4.jpg', 'Vi5.jpg',
         'Vi6.jpg', 'Vi7.jpg', 'Vi8.jpg', 'Vi9.jpg', 'Vi10.jpg',
@@ -64,7 +78,6 @@
     let rotationX = 0, rotationY = 0, targetRotationX = 0, targetRotationY = 0;
     let lastX = 0, lastY = 0, isDragging = false, active = false;
 
-    // ALGORITMO DE BARAJADO PARA EVITAR REPETICIONES
     function barajarFotos() {
         mazoFotos = [...galeriaFotos].sort(() => Math.random() - 0.5);
     }
@@ -102,7 +115,7 @@
         let y2 = y * Math.cos(rotationX) - z1 * Math.sin(rotationX);
         
         const scale = Math.min(width, height) / 50;
-        return { x: x1 * scale + width / 2, y: y2 * scale + height / 2 - 130 };
+        return { x: x1 * scale + width / 2, y: y2 * scale + height / 2 - 100 };
     }
 
     function createTextPoints(text, xCenter) {
@@ -152,8 +165,8 @@
                 if (p.isText) {
                     if (!p.locked) {
                         const dist = Math.hypot(p.tx - p.x, p.ty - p.y);
-                        if (dist < 0.5) {
-                            p.x = p.tx; p.y = p.ty; p.vx = 0; p.vy = 0; p.locked = true;
+                        if (dist < 1) {
+                            p.x = p.tx; p.y = p.ty; p.locked = true;
                         } else {
                             p.vx += (p.tx - p.x) * 0.04;
                             p.vy += (p.ty - p.y) * 0.04;
@@ -169,7 +182,7 @@
                     p.x += p.vx; p.y += p.vy;
                 }
                 ctx.fillStyle = '#ff2d55';
-                ctx.fillRect(p.x, p.y, 2.3, 2.3);
+                ctx.fillRect(p.x, p.y, 2, 2);
             });
         }
         requestAnimationFrame(draw);
@@ -185,10 +198,12 @@
     window.addEventListener('touchend', (e) => {
         const now = Date.now();
         if (now - lastTap < 300) {
-            foto.style.transform = "translate(-50%, -50%) scale(1)";
+            foto.style.transform = "scale(1)";
             foto.style.opacity = "1";
+            
+            // REGRESAMOS A 8 SEGUNDOS (8000ms)
             setTimeout(() => { 
-                foto.style.transform = "translate(-50%, -50%) scale(0)";
+                foto.style.transform = "scale(0)";
                 foto.style.opacity = "0";
                 setTimeout(cambiarFoto, 800); 
             }, 8000);
