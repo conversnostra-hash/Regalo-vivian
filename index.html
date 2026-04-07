@@ -51,7 +51,7 @@
     const btn = document.getElementById('btn-play');
     const foto = document.getElementById('foto-vivian');
 
-    // LISTA DE FOTOS (19 TOTAL)
+    // CONFIGURACIÓN DE GALERÍA (19 FOTOS)
     const galeriaFotos = [
         'Vi1.jpg', 'Vi2.jpg', 'Vi3.jpg', 'Vi4.jpg', 'Vi5.jpg',
         'Vi6.jpg', 'Vi7.jpg', 'Vi8.jpg', 'Vi9.jpg', 'Vi10.jpg',
@@ -64,7 +64,7 @@
     let rotationX = 0, rotationY = 0, targetRotationX = 0, targetRotationY = 0;
     let lastX = 0, lastY = 0, isDragging = false, active = false;
 
-    // SISTEMA DE BARAJADO PARA NO REPETIR FOTOS
+    // ALGORITMO DE BARAJADO PARA EVITAR REPETICIONES
     function barajarFotos() {
         mazoFotos = [...galeriaFotos].sort(() => Math.random() - 0.5);
     }
@@ -187,13 +187,11 @@
         if (now - lastTap < 300) {
             foto.style.transform = "translate(-50%, -50%) scale(1)";
             foto.style.opacity = "1";
-            
-            // AJUSTE A 5 SEGUNDOS (5000ms)
             setTimeout(() => { 
                 foto.style.transform = "translate(-50%, -50%) scale(0)";
                 foto.style.opacity = "0";
                 setTimeout(cambiarFoto, 800); 
-            }, 5000);
+            }, 8000);
         }
         lastTap = now;
         isDragging = false;
