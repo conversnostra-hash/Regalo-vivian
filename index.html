@@ -47,19 +47,20 @@
 
     let width, height, particles = [];
     let rotationX = 0, rotationY = 0, targetRotationX = 0, targetRotationY = 0;
-    let lastX = 0, lastY = 0, isDragging = false;
-    let state = "WAIT"; 
+    let lastX = 0, lastY = 0, isDragging = false, active = false;
+    let state = "HEART"; // HEART o TEXT
 
     function init() {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
         particles = [];
+        // 3500 partículas para una densidad de texto perfecta
         for (let i = 0; i < 3500; i++) {
             const t = Math.random() * Math.PI * 2;
             particles.push({
                 t, r: Math.pow(Math.random(), 0.5), z: (Math.random()-0.5)*20,
                 x: width/2, y: height/2, vx: 0, vy: 0, 
-                tx: 0, ty: 0, isText: false, locked: false
+                tx: 0, ty: 0, isText: false
             });
         }
     }
@@ -75,7 +76,7 @@
         let y2 = y * Math.cos(rotationX) - z1 * Math.sin(rotationX);
         
         const scale = Math.min(width, height) / 45;
-        return { x: x1 * scale + width / 2, y: y2 * scale + height / 2 - 100 };
+        return { x: x1 * scale + width / 2, y: y2 * scale + height / 2 - 80 };
     }
 
     function createTextPoints(text, xCenter) {
@@ -93,7 +94,6 @@
     }
 
     async function startSequence() {
-        state = "ANIMATING";
         const words = [
             { txt: "¡Feliz", x: width * 0.22 },
             { txt: "Cumpleaños,", x: width * 0.5 },
@@ -105,35 +105,26 @@
             const pts = createTextPoints(word.txt, word.x);
             for (let i = 0; i < pts.length && pIdx < particles.length; i++) {
                 let p = particles[pIdx++];
-                p.isText = true;
-                p.tx = pts[i].x;
-                p.ty = pts[i].y;
+                p.isText = true; p.tx = pts[i].x; p.ty = pts[i].y;
             }
-            await new Promise(r => setTimeout(r, 800)); // Aparición secuencial
+            await new Promise(r => setTimeout(r, 800)); // Secuencial
         }
-
-        // Una vez que todas las letras llegaron, el corazón recupera su forma
-        setTimeout(() => { state = "FINAL"; }, 2000);
+        // Retorno: El corazón vuelve a completarse arriba del texto
+        setTimeout(() => { state = "HEART"; }, 1000);
     }
 
     function draw() {
         ctx.fillStyle = 'rgba(0,0,0,0.18)';
         ctx.fillRect(0,0,width,height);
         
-        if (state !== "WAIT") {
+        if (active) {
             rotationX += (targetRotationX - rotationX) * 0.05;
             rotationY += (targetRotationY - rotationY) * 0.05;
 
             particles.forEach(p => {
-                // Lógica de destino: Si es partícula de texto, va a su sitio. 
-                // Si el estado es FINAL, las partículas que NO son texto vuelven al corazón.
-                let target;
-                if (p.isText) {
-                    target = {x: p.tx, y: p.ty};
-                } else {
-                    target = getHeartPos(p);
-                }
-
+                // Si es de texto, va a su sitio fijo. Si no, sigue al corazón 3D.
+                const target = p.isText ? {x: p.tx, y: p.ty} : getHeartPos(p);
+                
                 p.vx += (target.x - p.x) * 0.045;
                 p.vy += (target.y - p.y) * 0.045;
                 p.vx *= 0.85; p.vy *= 0.85;
@@ -148,11 +139,11 @@
 
     btn.addEventListener('click', () => {
         audio.play(); btn.style.display = 'none';
-        state = "HEART";
+        active = true;
         setTimeout(startSequence, 1500);
     });
 
-    // Interacción 3D y doble toque
+    // Interacción Táctil y Sorpresa
     let lastTap = 0;
     window.addEventListener('touchend', (e) => {
         const now = Date.now();
