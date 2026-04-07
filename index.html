@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -11,29 +12,27 @@
         
         #btn-play {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 100; background: rgba(0, 0, 0, 0.9); border: 2px solid #ff2d55;
-            color: #ff2d55; padding: 15px 30px; border-radius: 50px; cursor: pointer;
-            font-family: 'Montserrat', sans-serif; font-size: 14px; letter-spacing: 4px;
-            box-shadow: 0 0 20px #ff2d55;
+            z-index: 100; background: rgba(255, 45, 85, 0.1); border: 1px solid #ff2d55;
+            color: #ff2d55; padding: 15px 30px; border-radius: 40px; cursor: pointer;
+            font-family: 'Montserrat', sans-serif; font-size: 12px; letter-spacing: 3px;
         }
 
         #mensaje-fijo {
-            position: absolute; bottom: 5%; width: 100%; text-align: center; z-index: 10;
-            font-family: 'Montserrat', sans-serif; font-size: 0.65rem; letter-spacing: 1px;
-            text-transform: uppercase; color: #ffb3c1;
+            position: absolute; bottom: 8%; width: 100%; text-align: center; z-index: 10;
+            font-family: 'Montserrat', sans-serif; font-size: 0.7rem; letter-spacing: 2px;
+            text-transform: uppercase; opacity: 0.8;
         }
 
         #foto-vivian {
-            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0);
-            z-index: 50; max-height: 60%; max-width: 80%; border-radius: 15px;
-            box-shadow: 0 0 40px rgba(255, 45, 85, 0.8); transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            opacity: 0; pointer-events: none; border: 3px solid #ff2d55;
+            position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            z-index: 55; max-height: 80%; max-width: 80%; border-radius: 15px;
+            border: 2px solid #ff2d55; transition: all 0.6s ease; opacity: 0; pointer-events: none;
         }
     </style>
 </head>
 <body>
     <button id="btn-play">PARA VIVIAN 🎵</button>
-    <div id="mensaje-fijo">Tu belleza ilumina más que cualquier estrella.<br>(Doble toque en el corazón para sorpresa)</div>
+    <div id="mensaje-fijo">TU BELLEZA ILUMINA MÁS QUE CUALQUIER ESTRELLA.<br>(DOBLE TOQUE EN EL CORAZÓN PARA SORPRESA)</div>
     <img id="foto-vivian" src="Foto.jpg" alt="Vivian">
     <canvas id="heartCanvas"></canvas>
     <audio id="musica" loop><source src="bruno.mp3" type="audio/mpeg"></audio>
@@ -49,14 +48,13 @@
     let rotationX = 0, rotationY = 0;
     let targetRotationX = 0, targetRotationY = 0;
     let lastX = 0, lastY = 0, isDragging = false;
-    let state = "WAIT"; // WAIT, HEART, TEXT
+    let state = "WAIT"; 
 
     function init() {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
         particles = [];
-        // Aumentamos a 3000 partículas para mayor definición en las letras
-        for (let i = 0; i < 3000; i++) {
+        for (let i = 0; i < 2800; i++) {
             const t = Math.random() * Math.PI * 2;
             particles.push({
                 t, r: Math.pow(Math.random(), 0.5), z: (Math.random()-0.5)*20,
@@ -75,57 +73,56 @@
         let z1 = x * Math.sin(rotationY) + z * Math.cos(rotationY);
         let y2 = y * Math.cos(rotationX) - z1 * Math.sin(rotationX);
         
-        return { x: x1 * 10 + width / 2, y: y2 * 10 + height / 2 - 50 };
+        // Ajuste de escala dinámico según el ancho de pantalla
+        const scale = Math.min(width, height) / 45;
+        return { x: x1 * scale + width / 2, y: y2 * scale + height / 2 - 40 };
     }
 
-    function createTextPoints(text, xCenter) {
+    function createTextPoints(text, xPercent) {
         const tCanvas = document.createElement('canvas');
         const tCtx = tCanvas.getContext('2d');
         tCanvas.width = width; tCanvas.height = height;
         tCtx.fillStyle = "white";
-        // Fuente más grande y negrita para legibilidad
-        tCtx.font = `bold ${Math.min(width/9, 42)}px 'Dancing Script'`;
+        // Fuente responsiva
+        const fontSize = Math.min(width/10, 40);
+        tCtx.font = `bold ${fontSize}px 'Dancing Script'`;
         tCtx.textAlign = 'center';
-        tCtx.fillText(text, xCenter, height / 2 + 150);
+        tCtx.fillText(text, width * xPercent, height / 2 + 160);
         const data = tCtx.getImageData(0,0,width,height).data;
         const pts = [];
-        // Escaneo más denso para letras claras
-        for(let y=0; y<height; y+=2) for(let x=0; x<width; x+=2) if(data[(y*width+x)*4+3]>150) pts.push({x,y});
+        for(let y=0; y<height; y+=3) for(let x=0; x<width; x+=3) if(data[(y*width+x)*4+3]>128) pts.push({x,y});
         return pts;
     }
 
     async function startSequence() {
         state = "TEXT";
         const words = [
-            { txt: "¡Feliz", x: width * 0.20 },
-            { txt: "Cumpleaños,", x: width * 0.5 },
-            { txt: "Vivian!", x: width * 0.80 }
+            { txt: "¡Feliz", x: 0.2 },
+            { txt: "Cumpleaños,", x: 0.5 },
+            { txt: "Vivian!", x: 0.8 }
         ];
 
         let pIdx = 0;
-        // Limpiamos estados previos
         particles.forEach(p => p.active = false);
 
         for (let word of words) {
             const pts = createTextPoints(word.txt, word.x);
-            // Asignamos una cantidad específica de partículas por palabra para que no se mezclen
-            const maxPts = Math.floor(particles.length / 3);
-            for (let i = 0; i < pts.length && i < maxPts; i++) {
+            for (let i = 0; i < pts.length && pIdx < particles.length; i++) {
                 let p = particles[pIdx++];
                 p.active = true; p.tx = pts[i].x; p.ty = pts[i].y;
             }
-            await new Promise(r => setTimeout(r, 500));
+            await new Promise(r => setTimeout(r, 400));
         }
 
-        await new Promise(r => setTimeout(r, 4500)); // Tiempo para leer
+        await new Promise(r => setTimeout(r, 4500)); 
         
-        // REINICIO FORZADO: Limpiamos el estado de texto para que vuelvan al corazón
-        particles.forEach(p => p.active = false);
-        state = "HEART"; 
+        // CRÍTICO: Limpiar coordenadas de texto y forzar regreso
+        state = "HEART";
+        particles.forEach(p => { p.active = false; });
     }
 
     function draw() {
-        ctx.fillStyle = 'rgba(0,0,0,0.18)'; // Rastro ligeramente más corto para nitidez
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
         ctx.fillRect(0,0,width,height);
         
         if (state !== "WAIT") {
@@ -134,15 +131,13 @@
 
             particles.forEach(p => {
                 const target = (state === "TEXT" && p.active) ? {x: p.tx, y: p.ty} : getHeartPos(p);
-                // Física de movimiento suave pero precisa
-                p.vx += (target.x - p.x) * 0.045;
-                p.vy += (target.y - p.y) * 0.045;
-                p.vx *= 0.82; p.vy *= 0.82;
+                p.vx += (target.x - p.x) * 0.04;
+                p.vy += (target.y - p.y) * 0.04;
+                p.vx *= 0.85; p.vy *= 0.85;
                 p.x += p.vx; p.y += p.vy;
                 
                 ctx.fillStyle = '#ff2d55';
-                // Partículas un poco más grandes para que se vean sólidas
-                ctx.fillRect(p.x, p.y, 2.4, 2.4);
+                ctx.fillRect(p.x, p.y, 2, 2);
             });
         }
         requestAnimationFrame(draw);
@@ -151,7 +146,7 @@
     btn.addEventListener('click', () => {
         audio.play(); btn.style.display = 'none';
         state = "HEART";
-        setTimeout(startSequence, 2000);
+        setTimeout(startSequence, 1500);
     });
 
     let lastTap = 0;
@@ -159,8 +154,7 @@
         const now = Date.now();
         const touchX = e.changedTouches[0].clientX;
         const touchY = e.changedTouches[0].clientY;
-        // Detecta el área central donde late el corazón
-        const isHeartArea = Math.abs(touchX - width/2) < 120 && Math.abs(touchY - height/2) < 120;
+        const isHeartArea = Math.abs(touchX - width/2) < 100 && Math.abs(touchY - height/2) < 100;
 
         if (now - lastTap < 300 && isHeartArea) {
             foto.style.transform = "translate(-50%, -50%) scale(1)";
@@ -168,7 +162,7 @@
             setTimeout(() => { 
                 foto.style.transform = "translate(-50%, -50%) scale(0)";
                 foto.style.opacity = "0";
-            }, 7000);
+            }, 6000);
         }
         lastTap = now;
     });
@@ -180,14 +174,14 @@
 
     window.addEventListener('touchmove', e => {
         if(isDragging) {
-            targetRotationY += (e.touches[0].clientX - lastX) * 0.012;
-            targetRotationX -= (e.touches[0].clientY - lastY) * 0.012;
+            targetRotationY += (e.touches[0].clientX - lastX) * 0.01;
+            targetRotationX -= (e.touches[0].clientY - lastY) * 0.01;
             lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
         }
     });
 
     window.addEventListener('touchend', () => isDragging = false);
-    window.addEventListener('resize', init);
+    window.addEventListener('resize', () => { init(); });
     init(); draw();
 </script>
 </body>
