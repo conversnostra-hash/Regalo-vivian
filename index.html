@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -18,6 +17,12 @@
             box-shadow: 0 0 20px #ff2d55;
         }
 
+        #mensaje-fijo {
+            position: absolute; bottom: 8%; width: 100%; text-align: center; z-index: 10;
+            font-family: 'Montserrat', sans-serif; font-size: 0.7rem; letter-spacing: 2px;
+            text-transform: uppercase; color: #ffb3c1; opacity: 0.8;
+        }
+
         #foto-vivian {
             position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0);
             z-index: 50; max-height: 60%; max-width: 80%; border-radius: 15px;
@@ -28,6 +33,7 @@
 </head>
 <body>
     <button id="btn-play">PARA VIVIAN 🎵</button>
+    <div id="mensaje-fijo">Tu belleza ilumina más que cualquier estrella.<br>(Doble toque rápido para sorpresa)</div>
     <img id="foto-vivian" src="Foto.jpg" alt="Vivian">
     <canvas id="heartCanvas"></canvas>
     <audio id="musica" loop><source src="bruno.mp3" type="audio/mpeg"></audio>
@@ -40,8 +46,7 @@
     const foto = document.getElementById('foto-vivian');
 
     let width, height, particles = [];
-    let rotationX = 0, rotationY = 0;
-    let targetRotationX = 0, targetRotationY = 0;
+    let rotationX = 0, rotationY = 0, targetRotationX = 0, targetRotationY = 0;
     let lastX = 0, lastY = 0, isDragging = false;
     let state = "WAIT"; 
 
@@ -49,12 +54,12 @@
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
         particles = [];
-        for (let i = 0; i < 3000; i++) {
+        for (let i = 0; i < 3500; i++) {
             const t = Math.random() * Math.PI * 2;
             particles.push({
-                t, r: Math.pow(Math.random(), 0.5), z: (Math.random()-0.5)*25,
+                t, r: Math.pow(Math.random(), 0.5), z: (Math.random()-0.5)*20,
                 x: width/2, y: height/2, vx: 0, vy: 0, 
-                tx: 0, ty: 0, active: false 
+                tx: 0, ty: 0, isText: false, locked: false
             });
         }
     }
@@ -65,13 +70,12 @@
         let y = -(13 * Math.cos(p.t) - 5 * Math.cos(2*p.t) - 2 * Math.cos(3*p.t) - Math.cos(4*p.t)) * p.r * pulse;
         let z = p.z * pulse;
         
-        // CÁLCULO 3D PARA INTERACCIÓN
         let x1 = x * Math.cos(rotationY) - z * Math.sin(rotationY);
         let z1 = x * Math.sin(rotationY) + z * Math.cos(rotationY);
         let y2 = y * Math.cos(rotationX) - z1 * Math.sin(rotationX);
         
         const scale = Math.min(width, height) / 45;
-        return { x: x1 * scale + width / 2, y: y2 * scale + height / 2 - 80 };
+        return { x: x1 * scale + width / 2, y: y2 * scale + height / 2 - 100 };
     }
 
     function createTextPoints(text, xCenter) {
@@ -79,7 +83,7 @@
         const tCtx = tCanvas.getContext('2d');
         tCanvas.width = width; tCanvas.height = height;
         tCtx.fillStyle = "white";
-        tCtx.font = `bold ${Math.min(width/9, 40)}px 'Dancing Script'`;
+        tCtx.font = `bold ${Math.min(width/10, 42)}px 'Dancing Script'`;
         tCtx.textAlign = 'center';
         tCtx.fillText(text, xCenter, height / 2 + 180);
         const data = tCtx.getImageData(0,0,width,height).data;
@@ -89,7 +93,7 @@
     }
 
     async function startSequence() {
-        state = "TEXT";
+        state = "ANIMATING";
         const words = [
             { txt: "¡Feliz", x: width * 0.22 },
             { txt: "Cumpleaños,", x: width * 0.5 },
@@ -101,13 +105,15 @@
             const pts = createTextPoints(word.txt, word.x);
             for (let i = 0; i < pts.length && pIdx < particles.length; i++) {
                 let p = particles[pIdx++];
-                p.active = true;
+                p.isText = true;
                 p.tx = pts[i].x;
                 p.ty = pts[i].y;
             }
-            await new Promise(r => setTimeout(r, 600)); 
+            await new Promise(r => setTimeout(r, 800)); // Aparición secuencial
         }
-        // Se quedan fijas las letras pero el corazón sigue latiendo en 3D
+
+        // Una vez que todas las letras llegaron, el corazón recupera su forma
+        setTimeout(() => { state = "FINAL"; }, 2000);
     }
 
     function draw() {
@@ -115,13 +121,19 @@
         ctx.fillRect(0,0,width,height);
         
         if (state !== "WAIT") {
-            // Suavizado de la rotación 3D
             rotationX += (targetRotationX - rotationX) * 0.05;
             rotationY += (targetRotationY - rotationY) * 0.05;
 
             particles.forEach(p => {
-                const target = (state === "TEXT" && p.active) ? {x: p.tx, y: p.ty} : getHeartPos(p);
-                
+                // Lógica de destino: Si es partícula de texto, va a su sitio. 
+                // Si el estado es FINAL, las partículas que NO son texto vuelven al corazón.
+                let target;
+                if (p.isText) {
+                    target = {x: p.tx, y: p.ty};
+                } else {
+                    target = getHeartPos(p);
+                }
+
                 p.vx += (target.x - p.x) * 0.045;
                 p.vy += (target.y - p.y) * 0.045;
                 p.vx *= 0.85; p.vy *= 0.85;
@@ -135,13 +147,27 @@
     }
 
     btn.addEventListener('click', () => {
-        audio.play(); 
-        btn.style.display = 'none';
+        audio.play(); btn.style.display = 'none';
         state = "HEART";
-        setTimeout(startSequence, 2000);
+        setTimeout(startSequence, 1500);
     });
 
-    // INTERACCIÓN TÁCTIL 3D
+    // Interacción 3D y doble toque
+    let lastTap = 0;
+    window.addEventListener('touchend', (e) => {
+        const now = Date.now();
+        if (now - lastTap < 300) {
+            foto.style.transform = "translate(-50%, -50%) scale(1)";
+            foto.style.opacity = "1";
+            setTimeout(() => { 
+                foto.style.transform = "translate(-50%, -50%) scale(0)";
+                foto.style.opacity = "0";
+            }, 7000);
+        }
+        lastTap = now;
+        isDragging = false;
+    });
+
     window.addEventListener('touchstart', e => {
         lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
         isDragging = true;
@@ -155,22 +181,6 @@
         }
     });
 
-    window.addEventListener('touchend', (e) => {
-        isDragging = false;
-        // Lógica de doble toque para la foto
-        const now = Date.now();
-        if (now - lastTap < 300) {
-            foto.style.transform = "translate(-50%, -50%) scale(1)";
-            foto.style.opacity = "1";
-            setTimeout(() => { 
-                foto.style.transform = "translate(-50%, -50%) scale(0)";
-                foto.style.opacity = "0";
-            }, 7000);
-        }
-        lastTap = now;
-    });
-
-    let lastTap = 0;
     window.addEventListener('resize', init);
     init(); draw();
 </script>
