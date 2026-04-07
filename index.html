@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -8,16 +9,20 @@
         @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@300&display=swap');
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; color: white; touch-action: none; }
         canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
+        
         #btn-play {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             z-index: 100; background: rgba(0, 0, 0, 0.9); border: 2px solid #ff2d55;
             color: #ff2d55; padding: 15px 30px; border-radius: 50px; cursor: pointer;
             font-family: 'Montserrat', sans-serif; font-size: 14px; letter-spacing: 4px;
+            box-shadow: 0 0 20px #ff2d55;
         }
+
         #foto-vivian {
             position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0);
             z-index: 50; max-height: 60%; max-width: 80%; border-radius: 15px;
-            transition: all 0.6s ease; opacity: 0; pointer-events: none; border: 3px solid #ff2d55;
+            box-shadow: 0 0 40px rgba(255, 45, 85, 0.8); transition: all 0.6s ease;
+            opacity: 0; pointer-events: none; border: 3px solid #ff2d55;
         }
     </style>
 </head>
@@ -34,32 +39,39 @@
     const btn = document.getElementById('btn-play');
     const foto = document.getElementById('foto-vivian');
 
-    let width, height, heartParticles = [], textParticles = [];
-    let rotationX = 0, rotationY = 0, targetRotationX = 0, targetRotationY = 0;
-    let lastX = 0, lastY = 0, isDragging = false, active = false;
+    let width, height, particles = [];
+    let rotationX = 0, rotationY = 0;
+    let targetRotationX = 0, targetRotationY = 0;
+    let lastX = 0, lastY = 0, isDragging = false;
+    let state = "WAIT"; 
 
     function init() {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
-        heartParticles = [];
-        textParticles = [];
-        // Grupo 1: El corazón perpetuo
-        for (let i = 0; i < 1500; i++) {
+        particles = [];
+        for (let i = 0; i < 3000; i++) {
             const t = Math.random() * Math.PI * 2;
-            heartParticles.push({ t, r: Math.pow(Math.random(), 0.5), z: (Math.random()-0.5)*20, x: width/2, y: height/2, vx: 0, vy: 0 });
+            particles.push({
+                t, r: Math.pow(Math.random(), 0.5), z: (Math.random()-0.5)*25,
+                x: width/2, y: height/2, vx: 0, vy: 0, 
+                tx: 0, ty: 0, active: false 
+            });
         }
     }
 
-    function getHeartPos(p, offsetCenter = 80) {
-        const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.1;
+    function getHeartPos(p) {
+        const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.08;
         let x = 16 * Math.pow(Math.sin(p.t), 3) * p.r * pulse;
         let y = -(13 * Math.cos(p.t) - 5 * Math.cos(2*p.t) - 2 * Math.cos(3*p.t) - Math.cos(4*p.t)) * p.r * pulse;
         let z = p.z * pulse;
+        
+        // CÁLCULO 3D PARA INTERACCIÓN
         let x1 = x * Math.cos(rotationY) - z * Math.sin(rotationY);
         let z1 = x * Math.sin(rotationY) + z * Math.cos(rotationY);
         let y2 = y * Math.cos(rotationX) - z1 * Math.sin(rotationX);
+        
         const scale = Math.min(width, height) / 45;
-        return { x: x1 * scale + width / 2, y: y2 * scale + height / 2 - offsetCenter };
+        return { x: x1 * scale + width / 2, y: y2 * scale + height / 2 - 80 };
     }
 
     function createTextPoints(text, xCenter) {
@@ -67,97 +79,98 @@
         const tCtx = tCanvas.getContext('2d');
         tCanvas.width = width; tCanvas.height = height;
         tCtx.fillStyle = "white";
-        tCtx.font = `bold ${Math.min(width/10, 38)}px 'Dancing Script'`;
+        tCtx.font = `bold ${Math.min(width/9, 40)}px 'Dancing Script'`;
         tCtx.textAlign = 'center';
         tCtx.fillText(text, xCenter, height / 2 + 180);
         const data = tCtx.getImageData(0,0,width,height).data;
         const pts = [];
-        for(let y=0; y<height; y+=3) for(let x=0; x<width; x+=3) if(data[(y*width+x)*4+3]>128) pts.push({x,y});
+        for(let y=0; y<height; y+=2) for(let x=0; x<width; x+=2) if(data[(y*width+x)*4+3]>150) pts.push({x,y});
         return pts;
     }
 
-    async function startTextSequence() {
+    async function startSequence() {
+        state = "TEXT";
         const words = [
             { txt: "¡Feliz", x: width * 0.22 },
             { txt: "Cumpleaños,", x: width * 0.5 },
             { txt: "Vivian!", x: width * 0.78 }
         ];
 
+        let pIdx = 0;
         for (let word of words) {
             const pts = createTextPoints(word.txt, word.x);
-            pts.forEach(pt => {
-                // Las partículas nacen del centro del corazón
-                textParticles.push({
-                    x: width/2, y: height/2 - 80, 
-                    tx: pt.x, ty: pt.y, 
-                    vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10,
-                    life: 0
-                });
-            });
-            await new Promise(r => setTimeout(r, 700)); // Secuencial
+            for (let i = 0; i < pts.length && pIdx < particles.length; i++) {
+                let p = particles[pIdx++];
+                p.active = true;
+                p.tx = pts[i].x;
+                p.ty = pts[i].y;
+            }
+            await new Promise(r => setTimeout(r, 600)); 
         }
+        // Se quedan fijas las letras pero el corazón sigue latiendo en 3D
     }
 
     function draw() {
-        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.fillStyle = 'rgba(0,0,0,0.18)';
         ctx.fillRect(0,0,width,height);
         
-        if (active) {
+        if (state !== "WAIT") {
+            // Suavizado de la rotación 3D
             rotationX += (targetRotationX - rotationX) * 0.05;
             rotationY += (targetRotationY - rotationY) * 0.05;
 
-            // Dibujar Corazón (Siempre vuelve a su forma)
-            heartParticles.forEach(p => {
-                const target = getHeartPos(p);
-                p.vx += (target.x - p.x) * 0.04;
-                p.vy += (target.y - p.y) * 0.04;
+            particles.forEach(p => {
+                const target = (state === "TEXT" && p.active) ? {x: p.tx, y: p.ty} : getHeartPos(p);
+                
+                p.vx += (target.x - p.x) * 0.045;
+                p.vy += (target.y - p.y) * 0.045;
                 p.vx *= 0.85; p.vy *= 0.85;
                 p.x += p.vx; p.y += p.vy;
+                
                 ctx.fillStyle = '#ff2d55';
-                ctx.fillRect(p.x, p.y, 2, 2);
-            });
-
-            // Dibujar Texto (Secuencial y Permanente)
-            textParticles.forEach(p => {
-                p.vx += (p.tx - p.x) * 0.035;
-                p.vy += (p.ty - p.y) * 0.035;
-                p.vx *= 0.9; p.vy *= 0.9;
-                p.x += p.vx; p.y += p.vy;
-                ctx.fillStyle = `rgba(255, 45, 85, ${Math.min(p.life += 0.02, 1)})`;
-                ctx.fillRect(p.x, p.y, 1.8, 1.8);
+                ctx.fillRect(p.x, p.y, 2.2, 2.2);
             });
         }
         requestAnimationFrame(draw);
     }
 
     btn.addEventListener('click', () => {
-        audio.play(); btn.style.display = 'none';
-        active = true;
-        setTimeout(startTextSequence, 1500);
+        audio.play(); 
+        btn.style.display = 'none';
+        state = "HEART";
+        setTimeout(startSequence, 2000);
     });
 
-    // ... (Mantener los mismos listeners de drag y doble toque del corazón)
-    let lastTap = 0;
-    window.addEventListener('touchend', (e) => {
-        const now = Date.now();
-        const touchX = e.changedTouches[0].clientX;
-        const touchY = e.changedTouches[0].clientY;
-        if (now - lastTap < 300 && Math.abs(touchX - width/2) < 100) {
-            foto.style.transform = "translate(-50%, -50%) scale(1)";
-            foto.style.opacity = "1";
-            setTimeout(() => { foto.style.transform = "translate(-50%, -50%) scale(0)"; foto.style.opacity = "0"; }, 7000);
-        }
-        lastTap = now;
+    // INTERACCIÓN TÁCTIL 3D
+    window.addEventListener('touchstart', e => {
+        lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+        isDragging = true;
     });
-    window.addEventListener('touchstart', e => { lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; isDragging = true; });
+
     window.addEventListener('touchmove', e => {
         if(isDragging) {
-            targetRotationY += (e.touches[0].clientX - lastX) * 0.01;
-            targetRotationX -= (e.touches[0].clientY - lastY) * 0.01;
+            targetRotationY += (e.touches[0].clientX - lastX) * 0.015;
+            targetRotationX -= (e.touches[0].clientY - lastY) * 0.015;
             lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
         }
     });
-    window.addEventListener('touchend', () => isDragging = false);
+
+    window.addEventListener('touchend', (e) => {
+        isDragging = false;
+        // Lógica de doble toque para la foto
+        const now = Date.now();
+        if (now - lastTap < 300) {
+            foto.style.transform = "translate(-50%, -50%) scale(1)";
+            foto.style.opacity = "1";
+            setTimeout(() => { 
+                foto.style.transform = "translate(-50%, -50%) scale(0)";
+                foto.style.opacity = "0";
+            }, 7000);
+        }
+        lastTap = now;
+    });
+
+    let lastTap = 0;
     window.addEventListener('resize', init);
     init(); draw();
 </script>
