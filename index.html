@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -48,18 +49,18 @@
     let width, height, particles = [];
     let rotationX = 0, rotationY = 0, targetRotationX = 0, targetRotationY = 0;
     let lastX = 0, lastY = 0, isDragging = false, active = false;
-    let state = "HEART"; // HEART, TEXT_SEQUENCE, FINAL
 
     function init() {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
         particles = [];
-        for (let i = 0; i < 3500; i++) {
+        // Aumentamos a 4000 partículas para asegurar densidad en el texto
+        for (let i = 0; i < 4000; i++) {
             const t = Math.random() * Math.PI * 2;
             particles.push({
                 t, r: Math.pow(Math.random(), 0.5), z: (Math.random()-0.5)*25,
                 x: width/2, y: height/2, vx: 0, vy: 0, 
-                tx: 0, ty: 0, isText: false, alpha: 1
+                tx: 0, ty: 0, isText: false
             });
         }
     }
@@ -75,7 +76,6 @@
         let y2 = y * Math.cos(rotationX) - z1 * Math.sin(rotationX);
         
         const scale = Math.min(width, height) / 48;
-        // SUBIMOS EL CORAZÓN PARA DEJAR ESPACIO ABAJO
         return { x: x1 * scale + width / 2, y: y2 * scale + height / 2 - 120 };
     }
 
@@ -84,9 +84,9 @@
         const tCtx = tCanvas.getContext('2d');
         tCanvas.width = width; tCanvas.height = height;
         tCtx.fillStyle = "white";
+        // Forzamos fuente idéntica para todas las palabras
         tCtx.font = `bold ${Math.min(width/10, 38)}px 'Dancing Script'`;
         tCtx.textAlign = 'center';
-        // POSICIÓN DEL TEXTO BIEN ABAJO
         tCtx.fillText(text, xCenter, height * 0.82);
         const data = tCtx.getImageData(0,0,width,height).data;
         const pts = [];
@@ -95,7 +95,6 @@
     }
 
     async function startSequence() {
-        state = "TEXT_SEQUENCE";
         const words = [
             { txt: "¡Feliz", x: width * 0.22 },
             { txt: "Cumpleaños,", x: width * 0.5 },
@@ -107,12 +106,12 @@
             const pts = createTextPoints(word.txt, word.x);
             for (let i = 0; i < pts.length && pIdx < particles.length; i++) {
                 let p = particles[pIdx++];
-                p.isText = true; p.tx = pts[i].x; p.ty = pts[i].y;
+                p.isText = true; 
+                p.tx = pts[i].x; 
+                p.ty = pts[i].y;
             }
             await new Promise(r => setTimeout(r, 800));
         }
-        // DESPUÉS DE LAS LETRAS, EL CORAZÓN VUELVE A SU SITIO
-        setTimeout(() => { state = "FINAL"; }, 1000);
     }
 
     function draw() {
@@ -120,11 +119,16 @@
         ctx.fillRect(0,0,width,height);
         
         if (active) {
+            // LÓGICA DE RETORNO: Si no hay drag, las rotaciones vuelven a 0
+            if (!isDragging) {
+                targetRotationX *= 0.95;
+                targetRotationY *= 0.95;
+            }
+
             rotationX += (targetRotationX - rotationX) * 0.05;
             rotationY += (targetRotationY - rotationY) * 0.05;
 
             particles.forEach(p => {
-                // Si es texto se queda fijo, si no, sigue al corazón 3D
                 const target = p.isText ? {x: p.tx, y: p.ty} : getHeartPos(p);
                 
                 p.vx += (target.x - p.x) * 0.05;
@@ -133,7 +137,7 @@
                 p.x += p.vx; p.y += p.vy;
                 
                 ctx.fillStyle = '#ff2d55';
-                ctx.fillRect(p.x, p.y, 2, 2);
+                ctx.fillRect(p.x, p.y, 2.2, 2.2);
             });
         }
         requestAnimationFrame(draw);
@@ -142,7 +146,7 @@
     btn.addEventListener('click', () => {
         audio.play(); btn.style.display = 'none';
         active = true;
-        setTimeout(startSequence, 1500);
+        startSequence();
     });
 
     let lastTap = 0;
