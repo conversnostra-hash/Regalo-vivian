@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -25,7 +26,6 @@
 
         #foto-vivian {
             position: absolute; 
-            /* SUBIMOS LA FOTO UN POCO DEL CENTRO */
             top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0);
             z-index: 50; max-height: 60%; max-width: 80%; border-radius: 15px;
             box-shadow: 0 0 40px rgba(255, 45, 85, 0.8); transition: all 0.6s ease;
@@ -35,7 +35,7 @@
 </head>
 <body>
     <button id="btn-play">PARA VIVIAN 🎵</button>
-    <div id="mensaje-fijo">Tu belleza ilumina más que cualquier estrella.<br>(Doble toque rápido para sorpresa)</div>
+    <div id="mensaje-fijo">Tu belleza ilumina más que cualquier estrella.<br>(Doble toque en el centro inferior para sorpresa)</div>
     <img id="foto-vivian" src="Foto.jpg" alt="Vivian">
     <canvas id="heartCanvas"></canvas>
     <audio id="musica" loop><source src="bruno.mp3" type="audio/mpeg"></audio>
@@ -47,27 +47,31 @@
     const btn = document.getElementById('btn-play');
     const foto = document.getElementById('foto-vivian');
 
-    let width, height, particles = [];
+    // SEPARACIÓN DE SISTEMAS DE PARTÍCULAS
+    let width, height, heartParticles = [], textParticles = [];
     let rotationX = 0, rotationY = 0, targetRotationX = 0, targetRotationY = 0;
     let lastX = 0, lastY = 0, isDragging = false, active = false;
-    let state = "WAIT"; // WAIT, HEART, TEXT, FINAL
 
     function init() {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
-        particles = [];
-        for (let i = 0; i < 3500; i++) {
+        
+        // SISTEMA 1: CORAZÓN (Siempre vuelve a su sitio)
+        heartParticles = [];
+        for (let i = 0; i < 2000; i++) {
             const t = Math.random() * Math.PI * 2;
-            particles.push({
+            heartParticles.push({
                 t, r: Math.pow(Math.random(), 0.5), z: (Math.random()-0.5)*20,
-                x: width/2, y: height/2, vx: 0, vy: 0, 
-                tx: 0, ty: 0, isText: false
+                x: width/2, y: height/2, vx: 0, vy: 0
             });
         }
+        
+        // SISTEMA 2: TEXTO (Nace vacío y se llena secuencialmente)
+        textParticles = [];
     }
 
-    function getHeartPos(p) {
-        const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.08;
+    function getHeartPos(p, offsetCenter = 80) {
+        const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.1;
         let x = 16 * Math.pow(Math.sin(p.t), 3) * p.r * pulse;
         let y = -(13 * Math.cos(p.t) - 5 * Math.cos(2*p.t) - 2 * Math.cos(3*p.t) - Math.cos(4*p.t)) * p.r * pulse;
         let z = p.z * pulse;
@@ -77,8 +81,8 @@
         let y2 = y * Math.cos(rotationX) - z1 * Math.sin(rotationX);
         
         const scale = Math.min(width, height) / 45;
-        // SUBIMOS EL CORAZÓN UN POCO DEL CENTRO (-80px)
-        return { x: x1 * scale + width / 2, y: y2 * scale + height / 2 - 80 };
+        // SUBIMOS EL CORAZÓN UN POCO MÁS DEL CENTRO (-80px)
+        return { x: x1 * scale + width / 2, y: y2 * scale + height / 2 - offsetCenter };
     }
 
     function createTextPoints(text, xCenter) {
@@ -92,52 +96,61 @@
         tCtx.fillText(text, xCenter, height / 2 + 180);
         const data = tCtx.getImageData(0,0,width,height).data;
         const pts = [];
-        for(let y=0; y<height; y+=2) for(let x=0; x<width; x+=2) if(data[(y*width+x)*4+3]>150) pts.push({x,y});
+        for(let y=0; y<height; y+=3) for(let x=0; x<width; x+=3) if(data[(y*width+x)*4+3]>128) pts.push({x,y});
         return pts;
     }
 
-    async function startSequence() {
-        state = "TEXT";
+    async function startTextSequence() {
         const words = [
             { txt: "¡Feliz", x: width * 0.22 },
             { txt: "Cumpleaños,", x: width * 0.5 },
             { txt: "Vivian!", x: width * 0.78 }
         ];
 
-        let pIdx = 0;
         for (let word of words) {
             const pts = createTextPoints(word.txt, word.x);
-            for (let i = 0; i < pts.length && pIdx < particles.length; i++) {
-                let p = particles[pIdx++];
-                p.isText = true; p.tx = pts[i].x; p.ty = pts[i].y;
-            }
-            await new Promise(r => setTimeout(r, 800)); // Aparición secuencial
+            // El texto nace secuencialmente de las partículas del corazón y se queda ahí
+            pts.forEach(pt => {
+                textParticles.push({
+                    x: width/2, y: height/2 - 80, // Nacen del centro del corazón
+                    tx: pt.x, ty: pt.y, 
+                    vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10,
+                    life: 0 // Para la opacidad
+                });
+            });
+            await new Promise(r => setTimeout(r, 700)); // Secuencial
         }
-
-        // Una vez que el nombre está formado, liberamos el resto de partículas
-        // para que vuelvan obligatoriamente a formar el corazón 3D.
-        setTimeout(() => { state = "FINAL"; }, 1500);
     }
 
     function draw() {
-        ctx.fillStyle = 'rgba(0,0,0,0.18)';
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
         ctx.fillRect(0,0,width,height);
         
         if (active) {
             rotationX += (targetRotationX - rotationX) * 0.05;
             rotationY += (targetRotationY - rotationY) * 0.05;
 
-            particles.forEach(p => {
-                // Estado FINAL: Las de texto van a su sitio, el resto va al corazón 3D.
-                const target = p.isText ? {x: p.tx, y: p.ty} : getHeartPos(p);
-                
-                p.vx += (target.x - p.x) * 0.045;
-                p.vy += (target.y - p.y) * 0.045;
+            // DIBUJAR CORAZÓN (Sigue latiendo en 3D)
+            heartParticles.forEach(p => {
+                const target = getHeartPos(p);
+                p.vx += (target.x - p.x) * 0.04;
+                p.vy += (target.y - p.y) * 0.04;
                 p.vx *= 0.85; p.vy *= 0.85;
                 p.x += p.vx; p.y += p.vy;
-                
                 ctx.fillStyle = '#ff2d55';
-                ctx.fillRect(p.x, p.y, 2.2, 2.2);
+                ctx.fillRect(p.x, p.y, 2, 2);
+            });
+
+            // DIBUJAR TEXTO (Nace, forma y se queda fijo para siempre)
+            textParticles.forEach(p => {
+                p.vx += (p.tx - p.x) * 0.035;
+                p.vy += (p.ty - p.y) * 0.035;
+                p.vx *= 0.9; p.vy *= 0.9;
+                p.x += p.vx; p.y += p.vy;
+                
+                // Efecto de aparición suave
+                ctx.fillStyle = `rgba(255, 45, 85, ${Math.min(p.life += 0.02, 1)})`;
+                ctx.fillRect(p.x, p.y, 1.8, 1.8);
             });
         }
         requestAnimationFrame(draw);
@@ -146,19 +159,21 @@
     btn.addEventListener('click', () => {
         audio.play(); btn.style.display = 'none';
         active = true;
-        // Primero aseguramos que el corazón lata
-        state = "HEART";
-        // Después de 2 segundos, inicia la secuencia de letras
-        setTimeout(startSequence, 2000);
+        setTimeout(startTextSequence, 1500);
     });
 
     let lastTap = 0;
     window.addEventListener('touchend', (e) => {
         const now = Date.now();
-        if (now - lastTap < 300) {
+        const touchX = e.changedTouches[0].clientX;
+        const touchY = e.changedTouches[0].clientY;
+        
+        // DOBLE TOQUE MOVIDO A LA ZONA INFERIOR DE LA PANTALLA
+        const isPhotoArea = touchY > height * 0.65; // El doble toque en el 35% inferior
+
+        if (now - lastTap < 300 && isPhotoArea) {
             foto.style.transform = "translate(-50%, -50%) scale(1)";
             foto.style.opacity = "1";
-            // La foto aparece pero el corazón sigue latiendo detrás
             setTimeout(() => { 
                 foto.style.transform = "translate(-50%, -50%) scale(0)";
                 foto.style.opacity = "0";
