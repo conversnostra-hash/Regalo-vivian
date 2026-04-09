@@ -15,8 +15,9 @@
         
         canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
         
+        /* Letras Nítidas y Grandes para Vivian */
         #letras-cancion {
-            position: absolute; top: 10%; width: 100%; text-align: center; z-index: 60;
+            position: absolute; top: 12%; width: 100%; text-align: center; z-index: 60;
             font-family: 'Montserrat', sans-serif; font-weight: 700;
             font-size: 1.4rem; line-height: 1.3;
             color: #fff; text-shadow: 0 0 15px #ff2d55;
@@ -51,6 +52,7 @@
             box-shadow: 0 0 50px rgba(255, 45, 85, 0.9); 
             transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             transform: scale(0); opacity: 0; border: 3px solid #ff2d55;
+            background-color: #000;
         }
     </style>
 </head>
@@ -58,7 +60,11 @@
     <button id="btn-play">PARA VIVIAN 🎵</button>
     <div id="letras-cancion"></div>
     <div id="mensaje-fijo">Tu belleza ilumina todo.<br><b>(Doble toque para sorpresa)</b></div>
-    <div id="contenedor-foto"><img id="foto-vivian" src="" alt="Vivian"></div>
+    
+    <div id="contenedor-foto">
+        <img id="foto-vivian" src="" alt="Vivian">
+    </div>
+    
     <canvas id="heartCanvas"></canvas>
     <audio id="musica" loop><source src="bruno.mp3" type="audio/mpeg"></audio>
 
@@ -70,57 +76,38 @@
     const foto = document.getElementById('foto-vivian');
     const displayLetras = document.getElementById('letras-cancion');
 
-    // --- LETRA COMPLETA Y PERSONALIZADA ---
+    // --- BLOQUEO DE ZOOM NATIVO ---
+    document.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
+
+    // --- LETRA COMPLETA PERSONALIZADA (49 FRASES) ---
     const frasesCancion = [
-        "Oh, tus ojos, tus ojos...",
-        "Hacen que las estrellas parezcan no brillar",
-        "Tu cabello, tu cabello...",
-        "Cae perfectamente sin intentarlo",
-        "Vivian, eres tan hermosa",
-        "Y te lo digo todos los días",
-        "Sé que cuando te doy un cumplido...",
-        "A veces no me crees",
-        "Y es tan triste pensar...",
-        "Que no ves lo que yo veo",
-        "Pero cada vez que me preguntas...",
-        "¿Me veo bien?",
-        "Yo te digo...",
-        "Cuando veo tu rostro...",
-        "No hay nada que quisiera cambiar",
-        "Porque Vivian, eres increíble",
-        "Tal como eres",
-        "Y cuando sonríes...",
-        "El mundo entero se detiene",
-        "Se queda mirando por un momento",
-        "Porque eres asombrosa",
-        "Tal como eres, Vivian",
-        "Tus labios, tus labios...",
-        "Podría besarlos todo el día",
-        "Tu risa, tu risa...",
-        "Dices que la odias, pero es perfecta",
-        "Eres tan hermosa...",
-        "Y te lo digo todos los días",
-        "No te molestes en preguntar...",
-        "Si te ves bien, ya sabes qué diré",
-        "Cuando veo tu rostro...",
-        "No hay una sola cosa que cambiaría",
-        "Porque Vivian, eres increíble",
-        "Exactamente tal como eres",
-        "Y cuando sonríes...",
-        "El mundo entero se detiene a mirar",
-        "Porque eres simplemente increíble",
-        "La forma en que eres...",
-        "La forma en que eres...",
-        "Vivian, eres increíble",
-        "Tal como eres",
-        "Cuando veo tu rostro...",
-        "No hay nada que quisiera cambiar",
-        "Porque eres asombrosa",
-        "Tal como eres",
-        "Y cuando sonríes...",
-        "El mundo entero se detiene a mirar",
-        "Porque eres increíble",
-        "Tal como eres, Vivian"
+        "OH, TUS OJOS, TUS OJOS...", "HACEN QUE LAS ESTRELLAS PAREZCAN NO BRILLAR",
+        "TU CABELLO, TU CABELLO...", "CAE PERFECTAMENTE SIN INTENTARLO",
+        "VIVIAN, ERES TAN HERMOSA", "Y TE LO DIGO TODOS LOS DÍAS",
+        "SÉ QUE CUANDO TE DOY UN CUMPLIDO...", "A VECES PARECE QUE NO ME CREES",
+        "Y ES TAN TRISTE PENSAR...", "QUE NO VES LO QUE YO VEO EN TI",
+        "PERO CADA VEZ QUE ME PREGUNTAS...", "¿ME VEO BIEN?, YA SABES QUÉ DIRÉ",
+        "CUANDO VEO TU ROSTRO...", "NO HAY NADA QUE QUISIERA CAMBIAR",
+        "PORQUE VIVIAN, ERES INCREÍBLE", "EXACTAMENTE TAL COMO ERES",
+        "Y CUANDO SONRÍES...", "EL MUNDO ENTERO SE DETIENE A MIRAR",
+        "PORQUE ERES SIMPLEMENTE ASOMBROSA", "TAL COMO ERES, VIVIAN",
+        "TUS LABIOS, TUS LABIOS...", "PODRÍA BESARLOS TODO EL DÍA SI ME DEJARAS",
+        "TU RISA, TU RISA...", "DICES QUE LA ODIAS, PERO YO CREO QUE ES PERFECTA",
+        "SIGUES SIENDO TAN HERMOSA...", "Y TE LO DIGO TODOS LOS DÍAS",
+        "OH, NO TE MOLESTES EN PREGUNTAR...", "SI TE VES BIEN, YA SABES MI RESPUESTA",
+        "CUANDO VEO TU ROSTRO...", "NO HAY UNA SOLA COSA QUE CAMBIARÍA",
+        "PORQUE VIVIAN, ERES INCREÍBLE", "TAL COMO ERES",
+        "Y CUANDO SONRÍES...", "EL MUNDO ENTERO SE DETIENE A MIRAR",
+        "PORQUE ERES SIMPLEMENTE ASOMBROSA", "TAL COMO ERES",
+        "LA FORMA EN QUE ERES...", "LA FORMA EN QUE ERES...",
+        "VIVIAN, ERES INCREÍBLE", "TAL COMO ERES",
+        "CUANDO VEO TU ROSTRO...", "NO HAY NADA QUE QUISIERA CAMBIAR",
+        "PORQUE ERES ASOMBROSA", "TAL COMO ERES, VIVIAN",
+        "Y CUANDO SONRÍES...", "EL MUNDO ENTERO SE DETIENE A MIRAR",
+        "PORQUE ERES SIMPLEMENTE INCREÍBLE", "TAL COMO ERES...",
+        "SIEMPRE PERFECTA PARA MÍ."
     ];
 
     let fraseActual = 0;
@@ -230,10 +217,10 @@
         active = true;
         startSequence();
         
-        // Espera los 16s de intro instrumental
+        // Sincronización con el inicio de la letra (16 segundos de intro)
         setTimeout(() => {
             mostrarSiguienteFrase();
-            setInterval(mostrarSiguienteFrase, 5200); 
+            setInterval(mostrarSiguienteFrase, 4800); 
         }, 16000); 
     });
 
