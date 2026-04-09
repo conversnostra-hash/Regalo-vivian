@@ -15,13 +15,15 @@
         
         canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
         
-        /* Capa de Letras en Español */
+        /* Letras Nítidas (Montserrat Bold) */
         #letras-cancion {
             position: absolute; top: 12%; width: 100%; text-align: center; z-index: 60;
-            font-family: 'Dancing Script', cursive; font-size: 1.6rem;
+            font-family: 'Montserrat', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.4;
             color: #fff; text-shadow: 0 0 15px #ff2d55;
             opacity: 0; transition: opacity 1.5s ease-in-out;
             pointer-events: none; padding: 0 25px; box-sizing: border-box;
+            text-transform: uppercase; letter-spacing: 1px;
         }
 
         #btn-play {
@@ -69,23 +71,46 @@
     const foto = document.getElementById('foto-vivian');
     const displayLetras = document.getElementById('letras-cancion');
 
-    // CONFIGURACIÓN DE LETRAS
+    // --- REPERTORIO EXTENDIDO DE FRASES ---
     const frasesCancion = [
-        "Oh, tus ojos, tus ojos...",
-        "Hacen que las estrellas parezcan no brillar",
-        "Tu cabello, tu cabello...",
-        "Cae perfectamente sin intentarlo",
-        "Eres tan hermosa...",
-        "Y te lo digo todos los días",
-        "Cuando veo tu rostro...",
-        "No hay nada que quisiera cambiar",
-        "Porque eres increíble...",
-        "Tal como eres."
+        "OH, TUS OJOS, TUS OJOS...",
+        "HACEN QUE LAS ESTRELLAS PAREZCAN NO BRILLAR",
+        "TU CABELLO, TU CABELLO...",
+        "CAE PERFECTAMENTE SIN INTENTARLO",
+        "ERES TAN HERMOSA...",
+        "Y TE LO DIGO TODOS LOS DÍAS",
+        "SÍ, LO SÉ, LO SÉ...",
+        "CUANDO TE DOY UN CUMPLIDO, NO ME CREES",
+        "Y ES TAN, TAN TRISTE...",
+        "PENSAR QUE NO VES LO QUE YO VEO",
+        "CUANDO VEO TU ROSTRO...",
+        "NO HAY NADA QUE QUISIERA CAMBIAR",
+        "PORQUE ERES INCREÍBLE...",
+        "TAL COMO ERES.",
+        "Y CUANDO SONRÍES...",
+        "EL MUNDO ENTERO SE DETIENE Y SE QUEDA MIRANDO",
+        "PORQUE, VIVIAN, ERES INCREÍBLE...",
+        "TAL COMO ERES.",
+        "SUS LABIOS, SUS LABIOS...",
+        "PODRÍA BESARLOS TODO EL DÍA SI ME DEJARA",
+        "SU RISA, SU RISA...",
+        "ELLA LA ODIA PERO YO CREO QUE ES PERFECTA",
+        "SI ME PREGUNTAS SI TE VES BIEN...",
+        "SABES QUE SIEMPRE TE DIRÉ QUE...",
+        "CUANDO VEO TU ROSTRO...",
+        "NO HAY NADA QUE CAMBIARÍA",
+        "PORQUE ERES INCREÍBLE...",
+        "TAL COMO ERES.",
+        "Y CUANDO SONRÍES...",
+        "EL MUNDO SE DETIENE A MIRARTE",
+        "PORQUE, VIVIAN, ERES INCREÍBLE...",
+        "TAL COMO ERES."
     ];
     let fraseActual = 0;
-    let loopLetras;
+    let active = false;
 
     function mostrarSiguienteFrase() {
+        if (!active) return;
         displayLetras.style.opacity = 0;
         setTimeout(() => {
             displayLetras.innerText = frasesCancion[fraseActual];
@@ -100,7 +125,7 @@
 
     let width, height, particles = [];
     let rotationX = 0, rotationY = 0, targetRotationX = 0, targetRotationY = 0;
-    let lastX = 0, lastY = 0, isDragging = false, active = false;
+    let lastX = 0, lastY = 0, isDragging = false;
 
     function barajarFotos() { mazoFotos = [...galeriaFotos].sort(() => Math.random() - 0.5); }
     function cambiarFoto() {
@@ -139,7 +164,7 @@
         const tCtx = tCanvas.getContext('2d');
         tCanvas.width = width; tCanvas.height = height;
         tCtx.fillStyle = "white";
-        tCtx.font = `bold ${Math.min(width/10, 40)}px 'Dancing Script'`;
+        tCtx.font = `bold ${Math.min(width/10, 40)}px 'Dancing Script'`; 
         tCtx.textAlign = 'center';
         tCtx.fillText(text, xCenter, height * 0.84);
         const data = tCtx.getImageData(0,0,width,height).data;
@@ -190,11 +215,10 @@
         active = true;
         startSequence();
         
-        // --- AQUÍ ESTÁ EL CAMBIO CLAVE ---
-        // Esperamos 16 segundos (Intro instrumental) antes de mostrar la primera frase
+        // Intro de 16 segundos
         setTimeout(() => {
             mostrarSiguienteFrase();
-            loopLetras = setInterval(mostrarSiguienteFrase, 6000);
+            setInterval(mostrarSiguienteFrase, 5500); // Un poco más rápido para fluir con la letra
         }, 16000); 
     });
 
