@@ -51,6 +51,7 @@
             box-shadow: 0 0 50px rgba(255, 45, 85, 0.9); 
             transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             transform: scale(0); opacity: 0; border: 3px solid #ff2d55;
+            object-fit: cover;
         }
     </style>
 </head>
@@ -70,7 +71,41 @@
     const foto = document.getElementById('foto-vivian');
     const displayLetras = document.getElementById('letras-cancion');
 
-    // --- SINCRONIZACIÓN BASADA EN EL VIDEO (Tiempos en milisegundos) ---
+    // --- LÓGICA DE GALERÍA SIN REPETICIÓN (SISTEMA DE STACK) ---
+    const galeriaOriginal = ['Vi1.jpg', 'Vi2.jpg', 'Vi3.jpg', 'Vi4.jpg', 'Vi5.jpg', 'Vi6.jpg', 'Vi7.jpg', 'Vi8.jpg', 'Vi9.jpg', 'Vi10.jpg', 'Vi11.jpg', 'Vi12.jpg', 'Vi13.jpg', 'Vi14.jpg', 'Vi15.jpg', 'Vi16.jpg', 'Vi17.jpg', 'Vi18.jpg', 'Vi19.jpg'];
+    let mazoFotos = [];
+    let fotoVisible = false;
+
+    function rellenarMazo() {
+        // Copiamos y barajamos usando Fisher-Yates para aleatoriedad real
+        mazoFotos = [...galeriaOriginal];
+        for (let i = mazoFotos.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [mazoFotos[i], mazoFotos[j]] = [mazoFotos[j], mazoFotos[i]];
+        }
+    }
+
+    function mostrarNuevaFoto() {
+        if (fotoVisible) return; // Evita solapamiento si se hace doble toque muchas veces
+        
+        if (mazoFotos.length === 0) rellenarMazo();
+        
+        const siguienteFoto = mazoFotos.pop(); // Saca la foto del mazo (ya no se repite)
+        foto.src = siguienteFoto;
+        
+        fotoVisible = true;
+        foto.style.transform = "scale(1)";
+        foto.style.opacity = "1";
+
+        // Ocultar automáticamente tras 8 segundos
+        setTimeout(() => {
+            foto.style.transform = "scale(0)";
+            foto.style.opacity = "0";
+            setTimeout(() => { fotoVisible = false; }, 700);
+        }, 8000);
+    }
+
+    // --- SINCRONIZACIÓN DE LETRAS ---
     const letraSincronizada = [
         { tiempo: 16500, texto: "Oh, tus ojos, tus ojos..." },
         { tiempo: 20000, texto: "Hacen que las estrellas parezcan no brillar" },
@@ -123,40 +158,26 @@
         { tiempo: 216500, texto: "Siempre perfecta para mí." }
     ];
 
-    let active = false;
-
     function iniciarSincronizacion() {
         let letraIndex = 0;
         const checkTime = setInterval(() => {
             if (!active) { clearInterval(checkTime); return; }
-            
-            let currentTime = audio.currentTime * 1000; // Segundos a milisegundos
-
+            let currentTime = audio.currentTime * 1000;
             if (letraIndex < letraSincronizada.length && currentTime >= letraSincronizada[letraIndex].tiempo) {
-                // Ocultar frase anterior
                 displayLetras.style.opacity = 0;
-                
                 setTimeout(() => {
                     displayLetras.innerText = letraSincronizada[letraIndex].texto;
                     displayLetras.style.opacity = 1;
                     letraIndex++;
-                }, 400); // Pequeño delay para el fade
+                }, 400);
             }
         }, 100);
     }
 
-    // --- EL RESTO DEL CÓDIGO (PARTÍCULAS Y FOTOS) SE MANTIENE ---
-    const galeriaFotos = ['Vi1.jpg', 'Vi2.jpg', 'Vi3.jpg', 'Vi4.jpg', 'Vi5.jpg', 'Vi6.jpg', 'Vi7.jpg', 'Vi8.jpg', 'Vi9.jpg', 'Vi10.jpg', 'Vi11.jpg', 'Vi12.jpg', 'Vi13.jpg', 'Vi14.jpg', 'Vi15.jpg', 'Vi16.jpg', 'Vi17.jpg', 'Vi18.jpg', 'Vi19.jpg'];
-    let mazoFotos = [];
+    // --- CORAZÓN Y PARTÍCULAS ---
     let width, height, particles = [];
     let rotationX = 0, rotationY = 0, targetRotationX = 0, targetRotationY = 0;
     let lastX = 0, lastY = 0, isDragging = false;
-
-    function barajarFotos() { mazoFotos = [...galeriaFotos].sort(() => Math.random() - 0.5); }
-    function cambiarFoto() {
-        if (mazoFotos.length === 0) barajarFotos();
-        foto.src = mazoFotos.pop();
-    }
 
     function init() {
         width = canvas.width = window.innerWidth;
@@ -169,7 +190,7 @@
                 x: width/2, y: height/2, vx: 0, vy: 0, tx: 0, ty: 0, isText: false, locked: false
             });
         }
-        barajarFotos(); cambiarFoto();
+        rellenarMazo();
     }
 
     function getHeartPos(p) {
@@ -247,11 +268,7 @@
         const now = Date.now();
         if (now - lastTap < 300) {
             e.preventDefault();
-            foto.style.transform = "scale(1)"; foto.style.opacity = "1";
-            setTimeout(() => { 
-                foto.style.transform = "scale(0)"; foto.style.opacity = "0";
-                setTimeout(cambiarFoto, 800); 
-            }, 8000);
+            mostrarNuevaFoto(); // Llama a la lógica mejorada
         }
         lastTap = now; isDragging = false;
     });
