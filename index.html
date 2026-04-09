@@ -15,14 +15,13 @@
         
         canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
         
-        /* Letras Nítidas (Montserrat Bold) */
         #letras-cancion {
-            position: absolute; top: 12%; width: 100%; text-align: center; z-index: 60;
+            position: absolute; top: 10%; width: 100%; text-align: center; z-index: 60;
             font-family: 'Montserrat', sans-serif; font-weight: 700;
-            font-size: 1.5rem; line-height: 1.4;
+            font-size: 1.4rem; line-height: 1.3;
             color: #fff; text-shadow: 0 0 15px #ff2d55;
-            opacity: 0; transition: opacity 1.5s ease-in-out;
-            pointer-events: none; padding: 0 25px; box-sizing: border-box;
+            opacity: 0; transition: opacity 1.2s ease-in-out;
+            pointer-events: none; padding: 0 20px; box-sizing: border-box;
             text-transform: uppercase; letter-spacing: 1px;
         }
 
@@ -37,8 +36,8 @@
         #mensaje-fijo {
             position: absolute; bottom: 6%; width: 100%; text-align: center; z-index: 10;
             font-family: 'Montserrat', sans-serif; 
-            font-size: 0.85rem; font-weight: 400; letter-spacing: 1.5px;
-            line-height: 1.6; text-transform: uppercase; color: #ffb3c1;
+            font-size: 0.8rem; font-weight: 400; letter-spacing: 1.5px;
+            text-transform: uppercase; color: #ffb3c1;
         }
 
         #contenedor-foto {
@@ -58,7 +57,7 @@
 <body>
     <button id="btn-play">PARA VIVIAN 🎵</button>
     <div id="letras-cancion"></div>
-    <div id="mensaje-fijo">Tu belleza ilumina más que cualquier estrella.<br><b>(Doble toque para sorpresa)</b></div>
+    <div id="mensaje-fijo">Tu belleza ilumina todo.<br><b>(Doble toque para sorpresa)</b></div>
     <div id="contenedor-foto"><img id="foto-vivian" src="" alt="Vivian"></div>
     <canvas id="heartCanvas"></canvas>
     <audio id="musica" loop><source src="bruno.mp3" type="audio/mpeg"></audio>
@@ -71,41 +70,59 @@
     const foto = document.getElementById('foto-vivian');
     const displayLetras = document.getElementById('letras-cancion');
 
-    // --- REPERTORIO EXTENDIDO DE FRASES ---
+    // --- LETRA COMPLETA Y PERSONALIZADA ---
     const frasesCancion = [
-        "OH, TUS OJOS, TUS OJOS...",
-        "HACEN QUE LAS ESTRELLAS PAREZCAN NO BRILLAR",
-        "TU CABELLO, TU CABELLO...",
-        "CAE PERFECTAMENTE SIN INTENTARLO",
-        "ERES TAN HERMOSA...",
-        "Y TE LO DIGO TODOS LOS DÍAS",
-        "SÍ, LO SÉ, LO SÉ...",
-        "CUANDO TE DOY UN CUMPLIDO, NO ME CREES",
-        "Y ES TAN, TAN TRISTE...",
-        "PENSAR QUE NO VES LO QUE YO VEO",
-        "CUANDO VEO TU ROSTRO...",
-        "NO HAY NADA QUE QUISIERA CAMBIAR",
-        "PORQUE ERES INCREÍBLE...",
-        "TAL COMO ERES.",
-        "Y CUANDO SONRÍES...",
-        "EL MUNDO ENTERO SE DETIENE Y SE QUEDA MIRANDO",
-        "PORQUE, VIVIAN, ERES INCREÍBLE...",
-        "TAL COMO ERES.",
-        "SUS LABIOS, SUS LABIOS...",
-        "PODRÍA BESARLOS TODO EL DÍA SI ME DEJARA",
-        "SU RISA, SU RISA...",
-        "ELLA LA ODIA PERO YO CREO QUE ES PERFECTA",
-        "SI ME PREGUNTAS SI TE VES BIEN...",
-        "SABES QUE SIEMPRE TE DIRÉ QUE...",
-        "CUANDO VEO TU ROSTRO...",
-        "NO HAY NADA QUE CAMBIARÍA",
-        "PORQUE ERES INCREÍBLE...",
-        "TAL COMO ERES.",
-        "Y CUANDO SONRÍES...",
-        "EL MUNDO SE DETIENE A MIRARTE",
-        "PORQUE, VIVIAN, ERES INCREÍBLE...",
-        "TAL COMO ERES."
+        "Oh, tus ojos, tus ojos...",
+        "Hacen que las estrellas parezcan no brillar",
+        "Tu cabello, tu cabello...",
+        "Cae perfectamente sin intentarlo",
+        "Vivian, eres tan hermosa",
+        "Y te lo digo todos los días",
+        "Sé que cuando te doy un cumplido...",
+        "A veces no me crees",
+        "Y es tan triste pensar...",
+        "Que no ves lo que yo veo",
+        "Pero cada vez que me preguntas...",
+        "¿Me veo bien?",
+        "Yo te digo...",
+        "Cuando veo tu rostro...",
+        "No hay nada que quisiera cambiar",
+        "Porque Vivian, eres increíble",
+        "Tal como eres",
+        "Y cuando sonríes...",
+        "El mundo entero se detiene",
+        "Se queda mirando por un momento",
+        "Porque eres asombrosa",
+        "Tal como eres, Vivian",
+        "Tus labios, tus labios...",
+        "Podría besarlos todo el día",
+        "Tu risa, tu risa...",
+        "Dices que la odias, pero es perfecta",
+        "Eres tan hermosa...",
+        "Y te lo digo todos los días",
+        "No te molestes en preguntar...",
+        "Si te ves bien, ya sabes qué diré",
+        "Cuando veo tu rostro...",
+        "No hay una sola cosa que cambiaría",
+        "Porque Vivian, eres increíble",
+        "Exactamente tal como eres",
+        "Y cuando sonríes...",
+        "El mundo entero se detiene a mirar",
+        "Porque eres simplemente increíble",
+        "La forma en que eres...",
+        "La forma en que eres...",
+        "Vivian, eres increíble",
+        "Tal como eres",
+        "Cuando veo tu rostro...",
+        "No hay nada que quisiera cambiar",
+        "Porque eres asombrosa",
+        "Tal como eres",
+        "Y cuando sonríes...",
+        "El mundo entero se detiene a mirar",
+        "Porque eres increíble",
+        "Tal como eres, Vivian"
     ];
+
     let fraseActual = 0;
     let active = false;
 
@@ -116,13 +133,11 @@
             displayLetras.innerText = frasesCancion[fraseActual];
             displayLetras.style.opacity = 1;
             fraseActual = (fraseActual + 1) % frasesCancion.length;
-        }, 1500);
+        }, 1200);
     }
 
-    // LISTA DE FOTOS
     const galeriaFotos = ['Vi1.jpg', 'Vi2.jpg', 'Vi3.jpg', 'Vi4.jpg', 'Vi5.jpg', 'Vi6.jpg', 'Vi7.jpg', 'Vi8.jpg', 'Vi9.jpg', 'Vi10.jpg', 'Vi11.jpg', 'Vi12.jpg', 'Vi13.jpg', 'Vi14.jpg', 'Vi15.jpg', 'Vi16.jpg', 'Vi17.jpg', 'Vi18.jpg', 'Vi19.jpg'];
     let mazoFotos = [];
-
     let width, height, particles = [];
     let rotationX = 0, rotationY = 0, targetRotationX = 0, targetRotationY = 0;
     let lastX = 0, lastY = 0, isDragging = false;
@@ -215,10 +230,10 @@
         active = true;
         startSequence();
         
-        // Intro de 16 segundos
+        // Espera los 16s de intro instrumental
         setTimeout(() => {
             mostrarSiguienteFrase();
-            setInterval(mostrarSiguienteFrase, 5500); // Un poco más rápido para fluir con la letra
+            setInterval(mostrarSiguienteFrase, 5200); 
         }, 16000); 
     });
 
