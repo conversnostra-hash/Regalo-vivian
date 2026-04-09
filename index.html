@@ -15,14 +15,13 @@
         
         canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
         
-        /* Letras Nítidas y Grandes para Vivian */
         #letras-cancion {
             position: absolute; top: 12%; width: 100%; text-align: center; z-index: 60;
             font-family: 'Montserrat', sans-serif; font-weight: 700;
-            font-size: 1.4rem; line-height: 1.3;
+            font-size: 1.3rem; line-height: 1.4;
             color: #fff; text-shadow: 0 0 15px #ff2d55;
-            opacity: 0; transition: opacity 1.2s ease-in-out;
-            pointer-events: none; padding: 0 20px; box-sizing: border-box;
+            opacity: 0; transition: opacity 0.8s ease-in-out;
+            pointer-events: none; padding: 0 25px; box-sizing: border-box;
             text-transform: uppercase; letter-spacing: 1px;
         }
 
@@ -52,7 +51,6 @@
             box-shadow: 0 0 50px rgba(255, 45, 85, 0.9); 
             transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             transform: scale(0); opacity: 0; border: 3px solid #ff2d55;
-            background-color: #000;
         }
     </style>
 </head>
@@ -60,11 +58,7 @@
     <button id="btn-play">PARA VIVIAN 🎵</button>
     <div id="letras-cancion"></div>
     <div id="mensaje-fijo">Tu belleza ilumina todo.<br><b>(Doble toque para sorpresa)</b></div>
-    
-    <div id="contenedor-foto">
-        <img id="foto-vivian" src="" alt="Vivian">
-    </div>
-    
+    <div id="contenedor-foto"><img id="foto-vivian" src="" alt="Vivian"></div>
     <canvas id="heartCanvas"></canvas>
     <audio id="musica" loop><source src="bruno.mp3" type="audio/mpeg"></audio>
 
@@ -76,53 +70,82 @@
     const foto = document.getElementById('foto-vivian');
     const displayLetras = document.getElementById('letras-cancion');
 
-    // --- BLOQUEO DE ZOOM NATIVO ---
-    document.addEventListener('touchstart', (e) => {
-        if (e.touches.length > 1) e.preventDefault();
-    }, { passive: false });
-
-    // --- LETRA COMPLETA PERSONALIZADA (49 FRASES) ---
-    const frasesCancion = [
-        "OH, TUS OJOS, TUS OJOS...", "HACEN QUE LAS ESTRELLAS PAREZCAN NO BRILLAR",
-        "TU CABELLO, TU CABELLO...", "CAE PERFECTAMENTE SIN INTENTARLO",
-        "VIVIAN, ERES TAN HERMOSA", "Y TE LO DIGO TODOS LOS DÍAS",
-        "SÉ QUE CUANDO TE DOY UN CUMPLIDO...", "A VECES PARECE QUE NO ME CREES",
-        "Y ES TAN TRISTE PENSAR...", "QUE NO VES LO QUE YO VEO EN TI",
-        "PERO CADA VEZ QUE ME PREGUNTAS...", "¿ME VEO BIEN?, YA SABES QUÉ DIRÉ",
-        "CUANDO VEO TU ROSTRO...", "NO HAY NADA QUE QUISIERA CAMBIAR",
-        "PORQUE VIVIAN, ERES INCREÍBLE", "EXACTAMENTE TAL COMO ERES",
-        "Y CUANDO SONRÍES...", "EL MUNDO ENTERO SE DETIENE A MIRAR",
-        "PORQUE ERES SIMPLEMENTE ASOMBROSA", "TAL COMO ERES, VIVIAN",
-        "TUS LABIOS, TUS LABIOS...", "PODRÍA BESARLOS TODO EL DÍA SI ME DEJARAS",
-        "TU RISA, TU RISA...", "DICES QUE LA ODIAS, PERO YO CREO QUE ES PERFECTA",
-        "SIGUES SIENDO TAN HERMOSA...", "Y TE LO DIGO TODOS LOS DÍAS",
-        "OH, NO TE MOLESTES EN PREGUNTAR...", "SI TE VES BIEN, YA SABES MI RESPUESTA",
-        "CUANDO VEO TU ROSTRO...", "NO HAY UNA SOLA COSA QUE CAMBIARÍA",
-        "PORQUE VIVIAN, ERES INCREÍBLE", "TAL COMO ERES",
-        "Y CUANDO SONRÍES...", "EL MUNDO ENTERO SE DETIENE A MIRAR",
-        "PORQUE ERES SIMPLEMENTE ASOMBROSA", "TAL COMO ERES",
-        "LA FORMA EN QUE ERES...", "LA FORMA EN QUE ERES...",
-        "VIVIAN, ERES INCREÍBLE", "TAL COMO ERES",
-        "CUANDO VEO TU ROSTRO...", "NO HAY NADA QUE QUISIERA CAMBIAR",
-        "PORQUE ERES ASOMBROSA", "TAL COMO ERES, VIVIAN",
-        "Y CUANDO SONRÍES...", "EL MUNDO ENTERO SE DETIENE A MIRAR",
-        "PORQUE ERES SIMPLEMENTE INCREÍBLE", "TAL COMO ERES...",
-        "SIEMPRE PERFECTA PARA MÍ."
+    // --- SINCRONIZACIÓN BASADA EN EL VIDEO (Tiempos en milisegundos) ---
+    const letraSincronizada = [
+        { tiempo: 16500, texto: "Oh, tus ojos, tus ojos..." },
+        { tiempo: 20000, texto: "Hacen que las estrellas parezcan no brillar" },
+        { tiempo: 24500, texto: "Tu cabello, tu cabello..." },
+        { tiempo: 28000, texto: "Cae perfectamente sin intentarlo" },
+        { tiempo: 32500, texto: "Vivian, eres tan hermosa" },
+        { tiempo: 36000, texto: "Y te lo digo todos los días" },
+        { tiempo: 40500, texto: "Sé que cuando te doy un cumplido..." },
+        { tiempo: 44000, texto: "Parece que no me crees" },
+        { tiempo: 48500, texto: "Y es tan triste pensar..." },
+        { tiempo: 52000, texto: "Que no ves lo que yo veo en ti" },
+        { tiempo: 56500, texto: "Pero cada vez que me preguntas..." },
+        { tiempo: 60000, texto: "¿Me veo bien?, ya sabes qué diré" },
+        { tiempo: 64500, texto: "Cuando veo tu rostro..." },
+        { tiempo: 68500, texto: "No hay nada que quisiera cambiar" },
+        { tiempo: 72500, texto: "Porque Vivian, eres increíble" },
+        { tiempo: 76500, texto: "Tal como eres" },
+        { tiempo: 80500, texto: "Y cuando sonríes..." },
+        { tiempo: 84500, texto: "El mundo entero se detiene a mirar" },
+        { tiempo: 88500, texto: "Porque eres simplemente asombrosa" },
+        { tiempo: 92500, texto: "Tal como eres, Vivian" },
+        { tiempo: 104000, texto: "Tus labios, tus labios..." },
+        { tiempo: 108000, texto: "Podría besarlos todo el día" },
+        { tiempo: 112000, texto: "Tu risa, tu risa..." },
+        { tiempo: 116000, texto: "Dices que la odias, pero es perfecta" },
+        { tiempo: 120500, texto: "Vivian, eres tan hermosa..." },
+        { tiempo: 124000, texto: "Y te lo digo todos los días" },
+        { tiempo: 128500, texto: "Oh, no te moletestes en preguntar..." },
+        { tiempo: 132000, texto: "Si te ves bien, ya sabes mi respuesta" },
+        { tiempo: 136500, texto: "Cuando veo tu rostro..." },
+        { tiempo: 140500, texto: "No hay una sola cosa que cambiaría" },
+        { tiempo: 144500, texto: "Porque Vivian, eres increíble" },
+        { tiempo: 148500, texto: "Tal como eres" },
+        { tiempo: 152500, texto: "Y cuando sonríes..." },
+        { tiempo: 156500, texto: "El mundo entero se detiene a mirar" },
+        { tiempo: 160500, texto: "Porque eres simplemente asombrosa" },
+        { tiempo: 164500, texto: "Tal como eres" },
+        { tiempo: 168500, texto: "La forma en que eres..." },
+        { tiempo: 172500, texto: "La forma en que eres..." },
+        { tiempo: 176500, texto: "Vivian, eres increíble" },
+        { tiempo: 180500, texto: "Tal como eres" },
+        { tiempo: 184500, texto: "Cuando veo tu rostro..." },
+        { tiempo: 188500, texto: "No hay nada que quisiera cambiar" },
+        { tiempo: 192500, texto: "Porque eres asombrosa" },
+        { tiempo: 196500, texto: "Tal como eres, Vivian" },
+        { tiempo: 200500, texto: "Y cuando sonríes..." },
+        { tiempo: 204500, texto: "El mundo entero se detiene a mirar" },
+        { tiempo: 208500, texto: "Porque eres simplemente increíble" },
+        { tiempo: 212500, texto: "Tal como eres..." },
+        { tiempo: 216500, texto: "Siempre perfecta para mí." }
     ];
 
-    let fraseActual = 0;
     let active = false;
 
-    function mostrarSiguienteFrase() {
-        if (!active) return;
-        displayLetras.style.opacity = 0;
-        setTimeout(() => {
-            displayLetras.innerText = frasesCancion[fraseActual];
-            displayLetras.style.opacity = 1;
-            fraseActual = (fraseActual + 1) % frasesCancion.length;
-        }, 1200);
+    function iniciarSincronizacion() {
+        let letraIndex = 0;
+        const checkTime = setInterval(() => {
+            if (!active) { clearInterval(checkTime); return; }
+            
+            let currentTime = audio.currentTime * 1000; // Segundos a milisegundos
+
+            if (letraIndex < letraSincronizada.length && currentTime >= letraSincronizada[letraIndex].tiempo) {
+                // Ocultar frase anterior
+                displayLetras.style.opacity = 0;
+                
+                setTimeout(() => {
+                    displayLetras.innerText = letraSincronizada[letraIndex].texto;
+                    displayLetras.style.opacity = 1;
+                    letraIndex++;
+                }, 400); // Pequeño delay para el fade
+            }
+        }, 100);
     }
 
+    // --- EL RESTO DEL CÓDIGO (PARTÍCULAS Y FOTOS) SE MANTIENE ---
     const galeriaFotos = ['Vi1.jpg', 'Vi2.jpg', 'Vi3.jpg', 'Vi4.jpg', 'Vi5.jpg', 'Vi6.jpg', 'Vi7.jpg', 'Vi8.jpg', 'Vi9.jpg', 'Vi10.jpg', 'Vi11.jpg', 'Vi12.jpg', 'Vi13.jpg', 'Vi14.jpg', 'Vi15.jpg', 'Vi16.jpg', 'Vi17.jpg', 'Vi18.jpg', 'Vi19.jpg'];
     let mazoFotos = [];
     let width, height, particles = [];
@@ -216,12 +239,7 @@
         audio.play(); btn.style.display = 'none';
         active = true;
         startSequence();
-        
-        // Sincronización con el inicio de la letra (16 segundos de intro)
-        setTimeout(() => {
-            mostrarSiguienteFrase();
-            setInterval(mostrarSiguienteFrase, 4800); 
-        }, 16000); 
+        iniciarSincronizacion();
     });
 
     let lastTap = 0;
