@@ -7,7 +7,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;700&display=swap');
         
-        /* 'touch-action: manipulation' bloquea el doble toque para zoom en la mayoría de móviles */
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
             overflow: hidden; background-color: #000; color: white; 
@@ -16,6 +15,15 @@
         
         canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
         
+        /* Capa de Letras en Español */
+        #letras-cancion {
+            position: absolute; top: 12%; width: 100%; text-align: center; z-index: 60;
+            font-family: 'Dancing Script', cursive; font-size: 1.6rem;
+            color: #fff; text-shadow: 0 0 15px #ff2d55;
+            opacity: 0; transition: opacity 1.5s ease-in-out;
+            pointer-events: none; padding: 0 25px; box-sizing: border-box;
+        }
+
         #btn-play {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             z-index: 100; background: rgba(0, 0, 0, 0.9); border: 2px solid #ff2d55;
@@ -29,10 +37,8 @@
             font-family: 'Montserrat', sans-serif; 
             font-size: 0.85rem; font-weight: 400; letter-spacing: 1.5px;
             line-height: 1.6; text-transform: uppercase; color: #ffb3c1;
-            text-shadow: 0 0 10px rgba(255, 179, 193, 0.5);
         }
 
-        /* Contenedor que ignora la rotación del canvas */
         #contenedor-foto {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; align-items: center; justify-content: center;
@@ -40,23 +46,18 @@
         }
 
         #foto-vivian {
-            max-height: 60%; max-width: 85%; border-radius: 15px;
+            max-height: 55%; max-width: 85%; border-radius: 15px;
             box-shadow: 0 0 50px rgba(255, 45, 85, 0.9); 
             transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            transform: scale(0); opacity: 0;
-            border: 3px solid #ff2d55;
-            background-color: #000;
+            transform: scale(0); opacity: 0; border: 3px solid #ff2d55;
         }
     </style>
 </head>
 <body>
     <button id="btn-play">PARA VIVIAN 🎵</button>
+    <div id="letras-cancion"></div>
     <div id="mensaje-fijo">Tu belleza ilumina más que cualquier estrella.<br><b>(Doble toque para sorpresa)</b></div>
-    
-    <div id="contenedor-foto">
-        <img id="foto-vivian" src="" alt="Vivian">
-    </div>
-    
+    <div id="contenedor-foto"><img id="foto-vivian" src="" alt="Vivian"></div>
     <canvas id="heartCanvas"></canvas>
     <audio id="musica" loop><source src="bruno.mp3" type="audio/mpeg"></audio>
 
@@ -66,32 +67,45 @@
     const audio = document.getElementById('musica');
     const btn = document.getElementById('btn-play');
     const foto = document.getElementById('foto-vivian');
+    const displayLetras = document.getElementById('letras-cancion');
 
-    // Bloqueo total de zoom por software
-    document.addEventListener('touchstart', (e) => {
-        if (e.touches.length > 1) e.preventDefault(); // Bloquea zoom de dos dedos
-    }, { passive: false });
-
-    const galeriaFotos = [
-        'Vi1.jpg', 'Vi2.jpg', 'Vi3.jpg', 'Vi4.jpg', 'Vi5.jpg',
-        'Vi6.jpg', 'Vi7.jpg', 'Vi8.jpg', 'Vi9.jpg', 'Vi10.jpg',
-        'Vi11.jpg', 'Vi12.jpg', 'Vi13.jpg', 'Vi14.jpg', 'Vi15.jpg',
-        'Vi16.jpg', 'Vi17.jpg', 'Vi18.jpg', 'Vi19.jpg'
+    // CONFIGURACIÓN DE LETRAS
+    const frasesCancion = [
+        "Oh, tus ojos, tus ojos...",
+        "Hacen que las estrellas parezcan no brillar",
+        "Tu cabello, tu cabello...",
+        "Cae perfectamente sin intentarlo",
+        "Eres tan hermosa...",
+        "Y te lo digo todos los días",
+        "Cuando veo tu rostro...",
+        "No hay nada que quisiera cambiar",
+        "Porque eres increíble...",
+        "Tal como eres."
     ];
+    let fraseActual = 0;
+    let loopLetras;
+
+    function mostrarSiguienteFrase() {
+        displayLetras.style.opacity = 0;
+        setTimeout(() => {
+            displayLetras.innerText = frasesCancion[fraseActual];
+            displayLetras.style.opacity = 1;
+            fraseActual = (fraseActual + 1) % frasesCancion.length;
+        }, 1500);
+    }
+
+    // LISTA DE FOTOS
+    const galeriaFotos = ['Vi1.jpg', 'Vi2.jpg', 'Vi3.jpg', 'Vi4.jpg', 'Vi5.jpg', 'Vi6.jpg', 'Vi7.jpg', 'Vi8.jpg', 'Vi9.jpg', 'Vi10.jpg', 'Vi11.jpg', 'Vi12.jpg', 'Vi13.jpg', 'Vi14.jpg', 'Vi15.jpg', 'Vi16.jpg', 'Vi17.jpg', 'Vi18.jpg', 'Vi19.jpg'];
     let mazoFotos = [];
 
     let width, height, particles = [];
     let rotationX = 0, rotationY = 0, targetRotationX = 0, targetRotationY = 0;
     let lastX = 0, lastY = 0, isDragging = false, active = false;
 
-    function barajarFotos() {
-        mazoFotos = [...galeriaFotos].sort(() => Math.random() - 0.5);
-    }
-
+    function barajarFotos() { mazoFotos = [...galeriaFotos].sort(() => Math.random() - 0.5); }
     function cambiarFoto() {
         if (mazoFotos.length === 0) barajarFotos();
-        const nuevaFoto = mazoFotos.pop();
-        foto.src = nuevaFoto;
+        foto.src = mazoFotos.pop();
     }
 
     function init() {
@@ -102,12 +116,10 @@
             const t = Math.random() * Math.PI * 2;
             particles.push({
                 t, r: Math.pow(Math.random(), 0.5), z: (Math.random()-0.5)*30,
-                x: width/2, y: height/2, vx: 0, vy: 0, 
-                tx: 0, ty: 0, isText: false, locked: false
+                x: width/2, y: height/2, vx: 0, vy: 0, tx: 0, ty: 0, isText: false, locked: false
             });
         }
-        barajarFotos();
-        cambiarFoto();
+        barajarFotos(); cambiarFoto();
     }
 
     function getHeartPos(p) {
@@ -115,11 +127,9 @@
         let x = 16 * Math.pow(Math.sin(p.t), 3) * p.r * pulse;
         let y = -(13 * Math.cos(p.t) - 5 * Math.cos(2*p.t) - 2 * Math.cos(3*p.t) - Math.cos(4*p.t)) * p.r * pulse;
         let z = p.z * pulse;
-        
         let x1 = x * Math.cos(rotationY) - z * Math.sin(rotationY);
         let z1 = x * Math.sin(rotationY) + z * Math.cos(rotationY);
         let y2 = y * Math.cos(rotationX) - z1 * Math.sin(rotationX);
-        
         const scale = Math.min(width, height) / 50;
         return { x: x1 * scale + width / 2, y: y2 * scale + height / 2 - 100 };
     }
@@ -139,11 +149,7 @@
     }
 
     async function startSequence() {
-        const words = [
-            { txt: "¡Feliz", x: width * 0.22 },
-            { txt: "Cumpleaños,", x: width * 0.5 },
-            { txt: "Vivian!", x: width * 0.78 }
-        ];
+        const words = [{ txt: "¡Feliz", x: width * 0.22 }, { txt: "Cumpleaños,", x: width * 0.5 }, { txt: "Vivian!", x: width * 0.78 }];
         let pIdx = 0;
         for (let word of words) {
             const pts = createTextPoints(word.txt, word.x);
@@ -156,39 +162,24 @@
     }
 
     function draw() {
-        ctx.fillStyle = 'rgba(0,0,0,0.25)';
-        ctx.fillRect(0,0,width,height);
-        
+        ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(0,0,width,height);
         if (active) {
-            if (!isDragging) {
-                targetRotationX *= 0.90;
-                targetRotationY *= 0.90;
-            }
+            if (!isDragging) { targetRotationX *= 0.90; targetRotationY *= 0.90; }
             rotationX += (targetRotationX - rotationX) * 0.06;
             rotationY += (targetRotationY - rotationY) * 0.06;
-
             particles.forEach(p => {
                 if (p.isText) {
                     if (!p.locked) {
                         const dist = Math.hypot(p.tx - p.x, p.ty - p.y);
-                        if (dist < 1) {
-                            p.x = p.tx; p.y = p.ty; p.locked = true;
-                        } else {
-                            p.vx += (p.tx - p.x) * 0.04;
-                            p.vy += (p.ty - p.y) * 0.04;
-                            p.vx *= 0.8; p.vy *= 0.8;
-                            p.x += p.vx; p.y += p.vy;
-                        }
+                        if (dist < 1) { p.x = p.tx; p.y = p.ty; p.locked = true; }
+                        else { p.vx += (p.tx - p.x) * 0.04; p.vy += (p.ty - p.y) * 0.04; p.vx *= 0.8; p.vy *= 0.8; p.x += p.vx; p.y += p.vy; }
                     }
                 } else {
                     const target = getHeartPos(p);
-                    p.vx += (target.x - p.x) * 0.06;
-                    p.vy += (target.y - p.y) * 0.06;
-                    p.vx *= 0.82; p.vy *= 0.82;
-                    p.x += p.vx; p.y += p.vy;
+                    p.vx += (target.x - p.x) * 0.06; p.vy += (target.y - p.y) * 0.06;
+                    p.vx *= 0.82; p.vy *= 0.82; p.x += p.vx; p.y += p.vy;
                 }
-                ctx.fillStyle = '#ff2d55';
-                ctx.fillRect(p.x, p.y, 2.1, 2.1);
+                ctx.fillStyle = '#ff2d55'; ctx.fillRect(p.x, p.y, 2, 2);
             });
         }
         requestAnimationFrame(draw);
@@ -198,32 +189,31 @@
         audio.play(); btn.style.display = 'none';
         active = true;
         startSequence();
+        
+        // --- AQUÍ ESTÁ EL CAMBIO CLAVE ---
+        // Esperamos 16 segundos (Intro instrumental) antes de mostrar la primera frase
+        setTimeout(() => {
+            mostrarSiguienteFrase();
+            loopLetras = setInterval(mostrarSiguienteFrase, 6000);
+        }, 16000); 
     });
 
     let lastTap = 0;
     window.addEventListener('touchend', (e) => {
         const now = Date.now();
         if (now - lastTap < 300) {
-            // Prevenimos el comportamiento por defecto del doble tap
             e.preventDefault();
-            
-            foto.style.transform = "scale(1)";
-            foto.style.opacity = "1";
-            
-            // 8 SEGUNDOS DE VISIBILIDAD
+            foto.style.transform = "scale(1)"; foto.style.opacity = "1";
             setTimeout(() => { 
-                foto.style.transform = "scale(0)";
-                foto.style.opacity = "0";
+                foto.style.transform = "scale(0)"; foto.style.opacity = "0";
                 setTimeout(cambiarFoto, 800); 
             }, 8000);
         }
-        lastTap = now;
-        isDragging = false;
+        lastTap = now; isDragging = false;
     });
 
     window.addEventListener('touchstart', e => {
-        lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
-        isDragging = true;
+        lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; isDragging = true;
     });
 
     window.addEventListener('touchmove', e => {
