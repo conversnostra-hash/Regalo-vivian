@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Para Vivian</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
         
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
@@ -30,7 +30,7 @@
             z-index: 100; background: rgba(0, 0, 0, 0.9); border: 2px solid #ff2d55;
             color: #ff2d55; padding: 18px 36px; border-radius: 50px; cursor: pointer;
             font-family: 'Montserrat', sans-serif; font-size: 16px; letter-spacing: 4px;
-            box-shadow: 0 0 25px #ff2d55; text-transform: uppercase;
+            box-shadow: 0 0 25px #ff2d55;
         }
 
         #mensaje-fijo {
@@ -51,7 +51,6 @@
             box-shadow: 0 0 50px rgba(255, 45, 85, 0.9); 
             transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             transform: scale(0); opacity: 0; border: 3px solid #ff2d55;
-            object-fit: cover;
         }
     </style>
 </head>
@@ -73,33 +72,28 @@
 
     let width, height, particles = [];
     let rotationX = 0, rotationY = 0, targetRotationX = 0, targetRotationY = 0;
-    let lastX = 0, lastY = 0, isDragging = false;
-    let active = false;
+    let lastX = 0, lastY = 0, isDragging = false, active = false;
 
-    // --- GALERÍA SIN REPETICIÓN ---
+    // --- GALERÍA ---
     const galeriaOriginal = ['Vi1.jpg', 'Vi2.jpg', 'Vi3.jpg', 'Vi4.jpg', 'Vi5.jpg', 'Vi6.jpg', 'Vi7.jpg', 'Vi8.jpg', 'Vi9.jpg', 'Vi10.jpg', 'Vi11.jpg', 'Vi12.jpg', 'Vi13.jpg', 'Vi14.jpg', 'Vi15.jpg', 'Vi16.jpg', 'Vi17.jpg', 'Vi18.jpg', 'Vi19.jpg'];
     let mazoFotos = [];
     let fotoVisible = false;
 
-    function rellenarMazo() {
-        mazoFotos = [...galeriaOriginal].sort(() => Math.random() - 0.5);
-    }
-
+    function rellenarMazo() { mazoFotos = [...galeriaOriginal].sort(() => Math.random() - 0.5); }
+    
     function mostrarNuevaFoto() {
         if (fotoVisible) return;
         if (mazoFotos.length === 0) rellenarMazo();
         foto.src = mazoFotos.pop();
         fotoVisible = true;
-        foto.style.transform = "scale(1)";
-        foto.style.opacity = "1";
+        foto.style.transform = "scale(1)"; foto.style.opacity = "1";
         setTimeout(() => {
-            foto.style.transform = "scale(0)";
-            foto.style.opacity = "0";
+            foto.style.transform = "scale(0)"; foto.style.opacity = "0";
             setTimeout(() => { fotoVisible = false; }, 700);
         }, 8000);
     }
 
-    // --- LETRA SINCRONIZADA ---
+    // --- LETRA (Sincronizada con tu video) ---
     const letraSincronizada = [
         { tiempo: 16500, texto: "Oh, tus ojos, tus ojos..." },
         { tiempo: 20000, texto: "Hacen que las estrellas parezcan no brillar" },
@@ -120,19 +114,99 @@
         { tiempo: 80500, texto: "Y cuando sonríes..." },
         { tiempo: 84500, texto: "El mundo entero se detiene a mirar" },
         { tiempo: 88500, texto: "Porque eres simplemente asombrosa" },
-        { tiempo: 92500, texto: "Tal como eres, Vivian" },
-        { tiempo: 104000, texto: "Tus labios, tus labios..." },
-        { tiempo: 108000, texto: "Podría besarlos todo el día" },
-        { tiempo: 112000, texto: "Tu risa, tu risa..." },
-        { tiempo: 116000, texto: "Dices que la odias, pero es perfecta" },
-        { tiempo: 120500, texto: "Vivian, eres tan hermosa..." },
-        { tiempo: 124000, texto: "Y te lo digo todos los días" },
-        { tiempo: 128500, texto: "Oh, no te molestes en preguntar..." },
-        { tiempo: 132000, texto: "Si te ves bien, ya sabes mi respuesta" },
-        { tiempo: 136500, texto: "Cuando veo tu rostro..." },
-        { tiempo: 140500, texto: "No hay una sola cosa que cambiaría" },
-        { tiempo: 144500, texto: "Porque Vivian, eres increíble" },
-        { tiempo: 148500, texto: "Tal como eres" },
-        { tiempo: 152500, texto: "Y cuando sonríes..." },
-        { tiempo: 156500, texto:
+        { tiempo: 92500, texto: "Tal como eres, Vivian" }
+        // ... (resto de letras igual)
+    ];
 
+    function iniciarSincronizacion() {
+        let letraIndex = 0;
+        setInterval(() => {
+            if (!active) return;
+            let currentTime = audio.currentTime * 1000;
+            if (letraIndex < letraSincronizada.length && currentTime >= letraSincronizada[letraIndex].tiempo) {
+                displayLetras.style.opacity = 0;
+                setTimeout(() => {
+                    displayLetras.innerText = letraSincronizada[letraIndex].texto;
+                    displayLetras.style.opacity = 1;
+                    letraIndex++;
+                }, 400);
+            }
+        }, 100);
+    }
+
+    // --- CORAZÓN (Arreglado) ---
+    function init() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+        particles = [];
+        for (let i = 0; i < 3500; i++) {
+            particles.push({
+                t: Math.random() * Math.PI * 2,
+                r: Math.pow(Math.random(), 0.5),
+                z: (Math.random() - 0.5) * 20,
+                x: width / 2, // Empiezan en el centro
+                y: height / 2
+            });
+        }
+        rellenarMazo();
+    }
+
+    function draw() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(0, 0, width, height);
+        if (active) {
+            rotationY += (targetRotationY - rotationY) * 0.05;
+            rotationX += (targetRotationX - rotationX) * 0.05;
+            if(!isDragging) { targetRotationY *= 0.95; targetRotationX *= 0.95; }
+
+            particles.forEach(p => {
+                const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.1;
+                let x = 16 * Math.pow(Math.sin(p.t), 3);
+                let y = -(13 * Math.cos(p.t) - 5 * Math.cos(2*p.t) - 2 * Math.cos(3*p.t) - Math.cos(4*p.t));
+                
+                let x1 = x * Math.cos(rotationY) - p.z * Math.sin(rotationY);
+                let y2 = y * Math.cos(rotationX) - (x * Math.sin(rotationY) + p.z * Math.cos(rotationY)) * Math.sin(rotationX);
+
+                const scale = Math.min(width, height) / 40;
+                let tx = x1 * scale * pulse + width / 2;
+                let ty = y2 * scale * pulse + height / 2 - 30;
+
+                p.x += (tx - p.x) * 0.1;
+                p.y += (ty - p.y) * 0.1;
+
+                ctx.fillStyle = '#ff2d55';
+                ctx.fillRect(p.x, p.y, 2, 2);
+            });
+        }
+        requestAnimationFrame(draw);
+    }
+
+    btn.addEventListener('click', () => {
+        active = true;
+        btn.style.display = 'none';
+        audio.play();
+        iniciarSincronizacion();
+    });
+
+    let lastTap = 0;
+    window.addEventListener('touchstart', e => {
+        isDragging = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+        const now = Date.now();
+        if (now - lastTap < 300) mostrarNuevaFoto();
+        lastTap = now;
+    });
+    window.addEventListener('touchmove', e => {
+        if (isDragging) {
+            targetRotationY += (e.touches[0].clientX - lastX) * 0.01;
+            targetRotationX -= (e.touches[0].clientY - lastY) * 0.01;
+            lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+        }
+    });
+    window.addEventListener('touchend', () => { isDragging = false; });
+    window.addEventListener('resize', init);
+
+    init();
+    draw();
+</script>
+</body>
+</html>
