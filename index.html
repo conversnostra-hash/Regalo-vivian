@@ -16,11 +16,11 @@
         canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
         
         #letras-cancion {
-            position: absolute; top: 12%; width: 100%; text-align: center; z-index: 60;
+            position: absolute; top: 15%; width: 100%; text-align: center; z-index: 60;
             font-family: 'Montserrat', sans-serif; font-weight: 700;
             font-size: 1.25rem; line-height: 1.4;
             color: #fff; text-shadow: 0 0 15px #ff2d55;
-            opacity: 0; transition: opacity 1s ease-in-out;
+            opacity: 0; transition: opacity 0.8s ease-in-out;
             pointer-events: none; padding: 0 25px; box-sizing: border-box;
             text-transform: uppercase; letter-spacing: 1px;
         }
@@ -126,44 +126,44 @@
         }
     }
 
-    // --- LÍRICA EN ESPAÑOL SINCRONIZADA ---
+    // --- LÍRICA EN ESPAÑOL SECUENCIAL ---
     const letraSincronizada = [
-        { tiempo: 16500, texto: "Oh, tus ojos, tus ojos..." },
-        { tiempo: 20000, texto: "Hacen que las estrellas no parezcan brillar" },
-        { tiempo: 24500, texto: "Tu cabello, tu cabello..." },
-        { tiempo: 28000, texto: "Cae perfecto sin siquiera intentarlo" },
-        { tiempo: 32500, texto: "Vivian, eres tan hermosa..." },
-        { tiempo: 36000, texto: "Y te lo digo cada día" },
-        { tiempo: 40500, texto: "Sé que cuando te doy un cumplido..." },
-        { tiempo: 44000, texto: "Parece que no me crees" },
-        { tiempo: 48500, texto: "Y es tan triste pensar..." },
-        { tiempo: 52000, texto: "Que no ves lo que yo veo en ti" },
-        { tiempo: 56500, texto: "Pero cada vez que me preguntas..." },
-        { tiempo: 60000, texto: "¿Me veo bien?, ya sabes qué diré" },
-        { tiempo: 64500, texto: "Cuando veo tu rostro..." },
-        { tiempo: 68500, texto: "No hay nada que quisiera cambiar" },
-        { tiempo: 72500, texto: "Porque Vivian, eres increíble" },
-        { tiempo: 76500, texto: "Tal como eres" },
-        { tiempo: 80500, texto: "Y cuando sonríes..." },
-        { tiempo: 84500, texto: "El mundo entero se detiene a mirar" },
-        { tiempo: 88500, texto: "Porque eres simplemente asombrosa" },
-        { tiempo: 92500, texto: "Tal como eres, Vivian" }
+        { inicio: 16.5, fin: 19.5, texto: "Oh, tus ojos, tus ojos..." },
+        { inicio: 19.8, fin: 24.0, texto: "Hacen que las estrellas no parezcan brillar" },
+        { inicio: 24.5, fin: 27.5, texto: "Tu cabello, tu cabello..." },
+        { inicio: 27.8, fin: 32.0, texto: "Cae perfecto sin siquiera intentarlo" },
+        { inicio: 32.5, fin: 35.5, texto: "Vivian, eres tan hermosa..." },
+        { inicio: 35.8, fin: 40.0, texto: "Y te lo digo cada día" },
+        { inicio: 40.5, fin: 43.5, texto: "Sé que cuando te doy un cumplido..." },
+        { inicio: 43.8, fin: 48.0, texto: "Parece que no me crees" },
+        { inicio: 48.5, fin: 51.5, texto: "Y es tan triste pensar..." },
+        { inicio: 51.8, fin: 56.0, texto: "Que no ves lo que yo veo en ti" },
+        { inicio: 56.5, fin: 59.5, texto: "Pero cada vez que me preguntas..." },
+        { inicio: 59.8, fin: 64.0, texto: "¿Me veo bien?, ya sabes qué diré" },
+        { inicio: 64.5, fin: 68.0, texto: "Cuando veo tu rostro..." },
+        { inicio: 68.2, fin: 72.0, texto: "No hay nada que quisiera cambiar" },
+        { inicio: 72.5, fin: 76.0, texto: "Porque Vivian, eres increíble" },
+        { inicio: 76.2, fin: 80.0, texto: "Tal como eres" },
+        { inicio: 80.5, fin: 84.0, texto: "Y cuando sonríes..." },
+        { inicio: 84.2, fin: 88.0, texto: "El mundo entero se detiene a mirar" },
+        { inicio: 88.5, fin: 92.0, texto: "Porque eres simplemente asombrosa" },
+        { inicio: 92.2, fin: 96.0, texto: "Tal como eres, Vivian" }
     ];
 
-    function iniciarSincronizacion() {
-        let letraIdx = 0;
-        const interval = setInterval(() => {
-            if (!active) return;
-            let currentTime = audio.currentTime * 1000;
-            if (letraIdx < letraSincronizada.length && currentTime >= letraSincronizada[letraIdx].tiempo) {
-                displayLetras.style.opacity = 0;
-                setTimeout(() => {
-                    displayLetras.innerText = letraSincronizada[letraIdx].texto;
-                    displayLetras.style.opacity = 1;
-                    letraIdx++;
-                }, 500);
+    function actualizarLetras() {
+        if (!active) return;
+        const time = audio.currentTime;
+        let fraseActual = letraSincronizada.find(f => time >= f.inicio && time <= f.fin);
+
+        if (fraseActual) {
+            if (displayLetras.innerText !== fraseActual.texto) {
+                displayLetras.innerText = fraseActual.texto;
+                displayLetras.style.opacity = 1;
             }
-        }, 100);
+        } else {
+            displayLetras.style.opacity = 0;
+        }
+        requestAnimationFrame(actualizarLetras);
     }
 
     // --- NÚCLEO DEL CORAZÓN Y ANIMACIÓN ---
@@ -191,7 +191,6 @@
         ctx.fillRect(0, 0, width, height);
         
         if (active) {
-            // Dibujar Feliz Cumpleaños Horizontal
             textParticles.forEach(p => {
                 if(p.visible) {
                     p.x += (p.tx - p.x) * 0.05; p.y += (p.ty - p.y) * 0.05;
@@ -200,7 +199,6 @@
                 }
             });
 
-            // Dibujar Corazón 3D Relleno
             rotationY += (targetRotationY - rotationY) * 0.05;
             rotationX += (targetRotationX - rotationX) * 0.05;
             if(!isDragging) { targetRotationY *= 0.95; targetRotationX *= 0.95; }
@@ -233,7 +231,7 @@
         btn.style.display = 'none';
         audio.play();
         sequenceBirthdayText();
-        iniciarSincronizacion();
+        actualizarLetras(); // Inicia el bucle de sincronización
     });
 
     let lastTap = 0;
