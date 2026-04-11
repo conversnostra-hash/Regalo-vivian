@@ -30,7 +30,7 @@
             z-index: 100; background: rgba(0, 0, 0, 0.9); border: 2px solid #ff2d55;
             color: #ff2d55; padding: 18px 36px; border-radius: 50px; cursor: pointer;
             font-family: 'Montserrat', sans-serif; font-size: 16px; letter-spacing: 4px;
-            box-shadow: 0 0 25px #ff2d55;
+            box-shadow: 0 0 25px #ff2d55; text-transform: uppercase;
         }
 
         #mensaje-fijo {
@@ -71,33 +71,27 @@
     const foto = document.getElementById('foto-vivian');
     const displayLetras = document.getElementById('letras-cancion');
 
-    // --- LÓGICA DE GALERÍA SIN REPETICIÓN (SISTEMA DE STACK) ---
+    let width, height, particles = [];
+    let rotationX = 0, rotationY = 0, targetRotationX = 0, targetRotationY = 0;
+    let lastX = 0, lastY = 0, isDragging = false;
+    let active = false;
+
+    // --- GALERÍA SIN REPETICIÓN ---
     const galeriaOriginal = ['Vi1.jpg', 'Vi2.jpg', 'Vi3.jpg', 'Vi4.jpg', 'Vi5.jpg', 'Vi6.jpg', 'Vi7.jpg', 'Vi8.jpg', 'Vi9.jpg', 'Vi10.jpg', 'Vi11.jpg', 'Vi12.jpg', 'Vi13.jpg', 'Vi14.jpg', 'Vi15.jpg', 'Vi16.jpg', 'Vi17.jpg', 'Vi18.jpg', 'Vi19.jpg'];
     let mazoFotos = [];
     let fotoVisible = false;
 
     function rellenarMazo() {
-        // Copiamos y barajamos usando Fisher-Yates para aleatoriedad real
-        mazoFotos = [...galeriaOriginal];
-        for (let i = mazoFotos.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [mazoFotos[i], mazoFotos[j]] = [mazoFotos[j], mazoFotos[i]];
-        }
+        mazoFotos = [...galeriaOriginal].sort(() => Math.random() - 0.5);
     }
 
     function mostrarNuevaFoto() {
-        if (fotoVisible) return; // Evita solapamiento si se hace doble toque muchas veces
-        
+        if (fotoVisible) return;
         if (mazoFotos.length === 0) rellenarMazo();
-        
-        const siguienteFoto = mazoFotos.pop(); // Saca la foto del mazo (ya no se repite)
-        foto.src = siguienteFoto;
-        
+        foto.src = mazoFotos.pop();
         fotoVisible = true;
         foto.style.transform = "scale(1)";
         foto.style.opacity = "1";
-
-        // Ocultar automáticamente tras 8 segundos
         setTimeout(() => {
             foto.style.transform = "scale(0)";
             foto.style.opacity = "0";
@@ -105,7 +99,7 @@
         }, 8000);
     }
 
-    // --- SINCRONIZACIÓN DE LETRAS ---
+    // --- LETRA SINCRONIZADA ---
     const letraSincronizada = [
         { tiempo: 16500, texto: "Oh, tus ojos, tus ojos..." },
         { tiempo: 20000, texto: "Hacen que las estrellas parezcan no brillar" },
@@ -133,160 +127,12 @@
         { tiempo: 116000, texto: "Dices que la odias, pero es perfecta" },
         { tiempo: 120500, texto: "Vivian, eres tan hermosa..." },
         { tiempo: 124000, texto: "Y te lo digo todos los días" },
-        { tiempo: 128500, texto: "Oh, no te moletestes en preguntar..." },
+        { tiempo: 128500, texto: "Oh, no te molestes en preguntar..." },
         { tiempo: 132000, texto: "Si te ves bien, ya sabes mi respuesta" },
         { tiempo: 136500, texto: "Cuando veo tu rostro..." },
         { tiempo: 140500, texto: "No hay una sola cosa que cambiaría" },
         { tiempo: 144500, texto: "Porque Vivian, eres increíble" },
         { tiempo: 148500, texto: "Tal como eres" },
         { tiempo: 152500, texto: "Y cuando sonríes..." },
-        { tiempo: 156500, texto: "El mundo entero se detiene a mirar" },
-        { tiempo: 160500, texto: "Porque eres simplemente asombrosa" },
-        { tiempo: 164500, texto: "Tal como eres" },
-        { tiempo: 168500, texto: "La forma en que eres..." },
-        { tiempo: 172500, texto: "La forma en que eres..." },
-        { tiempo: 176500, texto: "Vivian, eres increíble" },
-        { tiempo: 180500, texto: "Tal como eres" },
-        { tiempo: 184500, texto: "Cuando veo tu rostro..." },
-        { tiempo: 188500, texto: "No hay nada que quisiera cambiar" },
-        { tiempo: 192500, texto: "Porque eres asombrosa" },
-        { tiempo: 196500, texto: "Tal como eres, Vivian" },
-        { tiempo: 200500, texto: "Y cuando sonríes..." },
-        { tiempo: 204500, texto: "El mundo entero se detiene a mirar" },
-        { tiempo: 208500, texto: "Porque eres simplemente increíble" },
-        { tiempo: 212500, texto: "Tal como eres..." },
-        { tiempo: 216500, texto: "Siempre perfecta para mí." }
-    ];
+        { tiempo: 156500, texto:
 
-    function iniciarSincronizacion() {
-        let letraIndex = 0;
-        const checkTime = setInterval(() => {
-            if (!active) { clearInterval(checkTime); return; }
-            let currentTime = audio.currentTime * 1000;
-            if (letraIndex < letraSincronizada.length && currentTime >= letraSincronizada[letraIndex].tiempo) {
-                displayLetras.style.opacity = 0;
-                setTimeout(() => {
-                    displayLetras.innerText = letraSincronizada[letraIndex].texto;
-                    displayLetras.style.opacity = 1;
-                    letraIndex++;
-                }, 400);
-            }
-        }, 100);
-    }
-
-    // --- CORAZÓN Y PARTÍCULAS ---
-    let width, height, particles = [];
-    let rotationX = 0, rotationY = 0, targetRotationX = 0, targetRotationY = 0;
-    let lastX = 0, lastY = 0, isDragging = false;
-
-    function init() {
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
-        particles = [];
-        for (let i = 0; i < 4800; i++) {
-            const t = Math.random() * Math.PI * 2;
-            particles.push({
-                t, r: Math.pow(Math.random(), 0.5), z: (Math.random()-0.5)*30,
-                x: width/2, y: height/2, vx: 0, vy: 0, tx: 0, ty: 0, isText: false, locked: false
-            });
-        }
-        rellenarMazo();
-    }
-
-    function getHeartPos(p) {
-        const pulse = 1 + Math.sin(Date.now() * 0.0035) * 0.12;
-        let x = 16 * Math.pow(Math.sin(p.t), 3) * p.r * pulse;
-        let y = -(13 * Math.cos(p.t) - 5 * Math.cos(2*p.t) - 2 * Math.cos(3*p.t) - Math.cos(4*p.t)) * p.r * pulse;
-        let z = p.z * pulse;
-        let x1 = x * Math.cos(rotationY) - z * Math.sin(rotationY);
-        let z1 = x * Math.sin(rotationY) + z * Math.cos(rotationY);
-        let y2 = y * Math.cos(rotationX) - z1 * Math.sin(rotationX);
-        const scale = Math.min(width, height) / 50;
-        return { x: x1 * scale + width / 2, y: y2 * scale + height / 2 - 100 };
-    }
-
-    function createTextPoints(text, xCenter) {
-        const tCanvas = document.createElement('canvas');
-        const tCtx = tCanvas.getContext('2d');
-        tCanvas.width = width; tCanvas.height = height;
-        tCtx.fillStyle = "white";
-        tCtx.font = `bold ${Math.min(width/10, 40)}px 'Dancing Script'`; 
-        tCtx.textAlign = 'center';
-        tCtx.fillText(text, xCenter, height * 0.84);
-        const data = tCtx.getImageData(0,0,width,height).data;
-        const pts = [];
-        for(let y=0; y<height; y+=2) for(let x=0; x<width; x+=2) if(data[(y*width+x)*4+3]>160) pts.push({x,y});
-        return pts;
-    }
-
-    async function startSequence() {
-        const words = [{ txt: "¡Feliz", x: width * 0.22 }, { txt: "Cumpleaños,", x: width * 0.5 }, { txt: "Vivian!", x: width * 0.78 }];
-        let pIdx = 0;
-        for (let word of words) {
-            const pts = createTextPoints(word.txt, word.x);
-            for (let i = 0; i < pts.length && pIdx < particles.length; i++) {
-                let p = particles[pIdx++];
-                p.isText = true; p.tx = pts[i].x; p.ty = pts[i].y;
-            }
-            await new Promise(r => setTimeout(r, 900));
-        }
-    }
-
-    function draw() {
-        ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(0,0,width,height);
-        if (active) {
-            if (!isDragging) { targetRotationX *= 0.90; targetRotationY *= 0.90; }
-            rotationX += (targetRotationX - rotationX) * 0.06;
-            rotationY += (targetRotationY - rotationY) * 0.06;
-            particles.forEach(p => {
-                if (p.isText) {
-                    if (!p.locked) {
-                        const dist = Math.hypot(p.tx - p.x, p.ty - p.y);
-                        if (dist < 1) { p.x = p.tx; p.y = p.ty; p.locked = true; }
-                        else { p.vx += (p.tx - p.x) * 0.04; p.vy += (p.ty - p.y) * 0.04; p.vx *= 0.8; p.vy *= 0.8; p.x += p.vx; p.y += p.vy; }
-                    }
-                } else {
-                    const target = getHeartPos(p);
-                    p.vx += (target.x - p.x) * 0.06; p.vy += (target.y - p.y) * 0.06;
-                    p.vx *= 0.82; p.vy *= 0.82; p.x += p.vx; p.y += p.vy;
-                }
-                ctx.fillStyle = '#ff2d55'; ctx.fillRect(p.x, p.y, 2, 2);
-            });
-        }
-        requestAnimationFrame(draw);
-    }
-
-    btn.addEventListener('click', () => {
-        audio.play(); btn.style.display = 'none';
-        active = true;
-        startSequence();
-        iniciarSincronizacion();
-    });
-
-    let lastTap = 0;
-    window.addEventListener('touchend', (e) => {
-        const now = Date.now();
-        if (now - lastTap < 300) {
-            e.preventDefault();
-            mostrarNuevaFoto(); // Llama a la lógica mejorada
-        }
-        lastTap = now; isDragging = false;
-    });
-
-    window.addEventListener('touchstart', e => {
-        lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; isDragging = true;
-    });
-
-    window.addEventListener('touchmove', e => {
-        if(isDragging) {
-            targetRotationY += (e.touches[0].clientX - lastX) * 0.02;
-            targetRotationX -= (e.touches[0].clientY - lastY) * 0.02;
-            lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
-        }
-    });
-
-    window.addEventListener('resize', init);
-    init(); draw();
-</script>
-</body>
-</html>
